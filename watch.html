@@ -1,916 +1,606 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Watch Donghua | chinesXdonghua</title>
+    <title>Watch Donghua | chinesXdonghua</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-* {
-    box-sizing: border-box;
-}
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: "#ff6b35",
+                        dark: "#080808",
+                        card: "#151515"
+                    }
+                }
+            }
+        };
+    </script>
 
-body {
-    background: #08090d;
-    color: white;
-    font-family: Arial, sans-serif;
-    margin: 0;
-}
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-:root {
-    --accent: #ff6b35;
-}
+        body {
+            background: #080808;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
 
-header {
-    background: rgba(10,11,16,.95);
-    backdrop-filter: blur(15px);
-}
+        .glass {
+            background: rgba(20,20,20,0.92);
+            backdrop-filter: blur(12px);
+        }
 
-.logo {
-    color: var(--accent);
-    font-weight: 900;
-    font-size: 21px;
-}
+        .player-container {
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+        }
 
-.player-container {
-    background: #000;
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-}
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
-video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background: #000;
-}
+        .server-btn {
+            background: #202020;
+            border: 1px solid #333;
+            padding: 10px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            transition: 0.2s;
+        }
 
-.player-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    pointer-events: none;
-}
+        .server-btn.active {
+            background: #ff6b35;
+            border-color: #ff6b35;
+        }
 
-.seek-area {
-    width: 50%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto;
-    position: relative;
-}
+        .episode-btn {
+            background: #191919;
+            border: 1px solid #292929;
+            border-radius: 9px;
+            padding: 13px;
+            transition: 0.2s;
+        }
 
-.seek-feedback {
-    display: none;
-    background: rgba(0,0,0,.75);
-    padding: 15px 22px;
-    border-radius: 50px;
-    font-weight: bold;
-    font-size: 18px;
-}
+        .episode-btn.active {
+            background: rgba(255,107,53,0.15);
+            border-color: #ff6b35;
+            color: #ff6b35;
+        }
 
-.seek-feedback.show {
-    display: block;
-    animation: pop .3s ease;
-}
+        .seek-overlay {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
 
-@keyframes pop {
-    from {
-        transform: scale(.7);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
+        .seek-overlay.show {
+            opacity: 1;
+        }
+    </style>
 
-.controls {
-    background: #11131b;
-    padding: 15px;
-}
-
-.control-btn {
-    background: #252833;
-    padding: 10px 15px;
-    border-radius: 8px;
-    font-size: 13px;
-}
-
-.control-btn:active {
-    background: var(--accent);
-}
-
-.progress {
-    width: 100%;
-    accent-color: var(--accent);
-    cursor: pointer;
-}
-
-.server-btn {
-    background: #1c1f29;
-    border: 1px solid #303442;
-    padding: 12px;
-    border-radius: 9px;
-    font-size: 13px;
-}
-
-.server-btn.active {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.episode-card {
-    background: #171923;
-    padding: 14px;
-    border-radius: 9px;
-    border: 1px solid #292d3a;
-}
-
-.episode-card.active {
-    border-color: var(--accent);
-    background: #28202a;
-}
-
-@media(max-width:600px) {
-
-    .player-container {
-        aspect-ratio: 16/9;
-    }
-
-    .controls {
-        padding: 10px;
-    }
-
-    .control-btn {
-        padding: 9px 11px;
-    }
-
-}
-</style>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
+    <!-- NAVBAR -->
+    <nav class="sticky top-0 z-50 glass border-b border-white/10">
 
-<header class="sticky top-0 z-50 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 
-<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-black">
+                chines<span class="text-brand">X</span>donghua
+            </a>
 
-<a href="index.html" class="logo">
-chinesX<span class="text-white">donghua</span>
-</a>
+            <a href="index.html"
+                class="text-sm text-gray-400 hover:text-brand">
+                ← Back to Home
+            </a>
 
-<a href="javascript:history.back()"
-class="text-gray-300 text-sm">
-← Back
-</a>
+        </div>
 
-</div>
-</header>
+    </nav>
 
 
-<!-- MAIN -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
 
-<main class="max-w-6xl mx-auto px-3 md:px-5 py-6">
+        <!-- ANIME TITLE -->
+        <section class="mb-5">
 
-<!-- TITLE -->
+            <p class="text-brand text-xs font-bold tracking-widest mb-2">
+                NOW WATCHING
+            </p>
 
-<div class="mb-5">
+            <h1 id="anime-title"
+                class="text-2xl md:text-3xl font-black">
+                Loading Donghua...
+            </h1>
 
-<p class="text-orange-500 text-xs font-bold">
-NOW WATCHING
-</p>
+            <p id="episode-title"
+                class="text-gray-400 text-sm mt-2">
+                Episode 1
+            </p>
 
-<h1 id="anime-title"
-class="text-2xl md:text-3xl font-black mt-2">
-Loading Donghua...
-</h1>
+        </section>
 
-<p id="episode-title"
-class="text-gray-400 text-sm mt-2">
-Episode 1
-</p>
 
-</div>
+        <!-- VIDEO PLAYER -->
+        <section class="player-container rounded-xl border border-white/10">
 
+            <video
+                id="video"
+                playsinline
+                preload="metadata"
+                controls
+            ></video>
 
-<!-- PLAYER -->
 
-<div class="rounded-xl overflow-hidden border border-white/10">
+            <!-- LEFT SEEK -->
+            <div id="seek-back"
+                class="seek-overlay left-6">
+                -10s
+            </div>
 
-<div class="player-container" id="player-area">
 
-<video id="video"
-playsinline
-preload="metadata">
-</video>
+            <!-- RIGHT SEEK -->
+            <div id="seek-forward"
+                class="seek-overlay right-6">
+                +10s
+            </div>
 
-<div class="absolute inset-0 flex items-center justify-center"
-id="loading-screen">
 
-<div class="text-center">
+            <!-- PLAYER MESSAGE -->
+            <div id="player-message"
+                class="absolute inset-0 flex items-center justify-center pointer-events-none text-center p-6">
 
-<div class="text-4xl mb-3">▶</div>
+                <div>
+                    <p class="text-3xl mb-3">▶</p>
 
-<p class="text-gray-400 text-sm">
-Select an available video source
-</p>
+                    <p class="text-sm text-gray-400">
+                        Select an available authorized video source.
+                    </p>
+                </div>
 
-</div>
+            </div>
 
-</div>
+        </section>
 
-<!-- DOUBLE TAP -->
 
-<div class="player-overlay">
+        <!-- PLAYER SHORTCUTS -->
+        <section class="flex flex-wrap items-center justify-between gap-4 mt-5">
 
-<div class="seek-area" id="left-seek">
+            <div class="flex gap-2">
 
-<div class="seek-feedback" id="back-feedback">
-⏪ 10 Seconds
-</div>
+                <button id="prev-episode"
+                    class="bg-card border border-white/10 px-4 py-3 rounded-lg text-sm">
+                    ◀ Previous
+                </button>
 
-</div>
+                <button id="next-episode"
+                    class="bg-brand px-4 py-3 rounded-lg text-sm font-bold">
+                    Next ▶
+                </button>
 
-<div class="seek-area" id="right-seek">
+            </div>
 
-<div class="seek-feedback" id="forward-feedback">
-10 Seconds ⏩
-</div>
 
-</div>
+            <div class="flex gap-2">
 
-</div>
+                <button id="speed-button"
+                    class="bg-card border border-white/10 px-4 py-3 rounded-lg text-sm">
+                    Speed 1x
+                </button>
 
-</div>
+                <button id="fullscreen-button"
+                    class="bg-card border border-white/10 px-4 py-3 rounded-lg text-sm">
+                    ⛶ Fullscreen
+                </button>
 
+            </div>
 
-<!-- CONTROLS -->
+        </section>
 
-<div class="controls">
 
-<input type="range"
-id="progress"
-class="progress"
-min="0"
-max="100"
-value="0">
+        <!-- SERVER SELECTION -->
+        <section class="mt-10 bg-card border border-white/10 rounded-xl p-5">
 
-<div class="flex justify-between items-center flex-wrap gap-3 mt-3">
+            <h2 class="font-bold text-lg mb-2">
+                Video Sources
+            </h2>
 
-<div class="flex gap-2">
+            <p class="text-gray-500 text-xs mb-5">
+                Choose an authorized source when available.
+            </p>
 
-<button class="control-btn"
-id="play-btn">
-▶ Play
-</button>
+            <div class="flex flex-wrap gap-3">
 
-<button class="control-btn"
-id="mute-btn">
-🔊
-</button>
+                <button class="server-btn active"
+                    data-server="auto">
+                    ⚡ Auto
+                </button>
 
-</div>
+                <button class="server-btn"
+                    data-server="official">
+                    Official
+                </button>
 
-<div class="flex gap-2 items-center">
+                <button class="server-btn"
+                    data-server="backup">
+                    Backup
+                </button>
 
-<select id="speed"
-class="control-btn">
+            </div>
 
-<option value="0.5">0.5x</option>
-<option value="0.75">0.75x</option>
-<option value="1" selected>1x</option>
-<option value="1.25">1.25x</option>
-<option value="1.5">1.5x</option>
-<option value="1.75">1.75x</option>
-<option value="2">2x</option>
+            <p id="server-status"
+                class="text-gray-500 text-xs mt-4">
+                Waiting for an authorized video source.
+            </p>
 
-</select>
+        </section>
 
-<button class="control-btn"
-id="fullscreen-btn">
-⛶ Fullscreen
-</button>
 
-</div>
+        <!-- EPISODE LIST -->
+        <section class="mt-10">
 
-</div>
+            <div class="flex justify-between items-center mb-5">
 
-<div class="flex justify-between text-xs text-gray-400 mt-3">
+                <h2 class="text-xl font-black">
+                    Episodes
+                </h2>
 
-<span id="current-time">00:00</span>
+                <span id="episode-count"
+                    class="text-gray-500 text-sm">
+                    Episode List
+                </span>
 
-<span id="duration">00:00</span>
+            </div>
 
-</div>
 
-</div>
+            <div id="episode-list"
+                class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10 gap-3">
 
-</div>
+                <p class="col-span-full text-gray-500">
+                    Loading episodes...
+                </p>
 
+            </div>
 
-<!-- PLAYER NOTE -->
+        </section>
 
-<p class="text-xs text-gray-500 mt-3">
-Double tap left to rewind 10 seconds.
-Double tap right to forward 10 seconds.
-</p>
 
+        <!-- DISCLAIMER -->
+        <section class="mt-10 bg-card border border-white/10 rounded-xl p-5">
 
-<!-- SERVER SELECTION -->
+            <h3 class="font-bold mb-2">
+                About Video Playback
+            </h3>
 
-<section class="mt-9">
+            <p class="text-gray-400 text-sm leading-7">
+                Video playback requires a working, authorized video source.
+                Anime metadata and episode information are provided separately.
+                Some titles may not have a playable source available.
+            </p>
 
-<h2 class="text-xl font-bold mb-4">
-⚡ Streaming Servers
-</h2>
+        </section>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    </main>
 
-<button class="server-btn active"
-data-server="auto">
 
-🟢 Auto Server
+    <!-- SCRIPTS -->
+    <script src="asset/js/app.js"></script>
+    <script src="asset/js/anime.js"></script>
+    <script src="asset/js/player.js"></script>
 
-</button>
 
-<button class="server-btn"
-data-server="dailymotion">
+    <!-- WATCH PAGE SYSTEM -->
+    <script>
 
-Server 1
+        const params = new URLSearchParams(location.search);
 
-</button>
+        const animeId = params.get("id");
 
-<button class="server-btn"
-data-server="free">
+        let currentEpisode = Math.max(
+            1,
+            Number(params.get("episode")) || 1
+        );
 
-Server 2
+        let totalEpisodes = 0;
 
-</button>
+        const video = document.getElementById("video");
 
-<button class="server-btn"
-data-server="backup">
+        const message = document.getElementById("player-message");
 
-Backup Server
 
-</button>
+        /* LOAD ANIME INFORMATION */
 
-</div>
+        async function loadWatchPage() {
 
-<p id="server-status"
-class="text-xs text-gray-500 mt-3">
+            if (!animeId || !/^\d+$/.test(animeId)) {
 
-No authorized video source connected yet.
+                document.getElementById("anime-title").textContent =
+                    "Invalid Donghua";
 
-</p>
+                return;
 
-</section>
+            }
 
+            const anime = await DonghuaAnime.getDetails(animeId);
 
-<!-- SUBTITLE -->
+            if (!anime) {
 
-<section class="mt-8">
+                document.getElementById("anime-title").textContent =
+                    "Donghua Not Found";
 
-<h2 class="text-lg font-bold mb-3">
-⚙️ Playback Settings
-</h2>
+                return;
 
-<div class="flex flex-wrap gap-3">
+            }
 
-<button class="control-btn"
-onclick="showMessage('Subtitle tracks will appear when provided by the video source.')">
+            const title = anime.title.english ||
+                          anime.title.romaji ||
+                          anime.title.native;
 
-CC Subtitles
+            document.getElementById("anime-title").textContent = title;
 
-</button>
+            totalEpisodes = anime.episodes || 0;
 
-<button class="control-btn"
-onclick="showMessage('Audio tracks depend on the selected video source.')">
+            document.getElementById("episode-count").textContent =
+                totalEpisodes
+                    ? `${totalEpisodes} Episodes`
+                    : "Episode count unavailable";
 
-Audio Tracks
+            renderEpisodes();
 
-</button>
+            updateEpisodeTitle();
 
-<button class="control-btn"
-onclick="showMessage('Quality options depend on the selected video source.')">
+        }
 
-Video Quality
 
-</button>
+        /* EPISODE LIST */
 
-</div>
+        function renderEpisodes() {
 
-</section>
+            const container = document.getElementById("episode-list");
 
+            if (!totalEpisodes) {
 
-<!-- EPISODES -->
+                container.innerHTML = `
+                    <p class="col-span-full text-gray-500 text-sm">
+                        Episode list is not available yet.
+                    </p>
+                `;
 
-<section class="mt-10">
+                return;
 
-<div class="flex justify-between items-center mb-4">
+            }
 
-<h2 class="text-xl font-bold">
-📺 Episodes
-</h2>
+            container.innerHTML = Array.from(
+                { length: totalEpisodes },
+                (_, index) => {
 
-<span class="text-xs text-gray-500"
-id="episode-count">
-Episode 1
-</span>
+                    const episode = index + 1;
 
-</div>
+                    return `
+                        <button
+                            class="episode-btn ${episode === currentEpisode ? "active" : ""}"
+                            onclick="changeEpisode(${episode})">
 
-<div id="episode-list"
-class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                            EP ${episode}
 
-</div>
+                        </button>
+                    `;
 
-</section>
+                }
+            ).join("");
 
+        }
 
-<!-- NEXT/PREVIOUS -->
 
-<div class="flex justify-between gap-3 mt-8">
+        /* CHANGE EPISODE */
 
-<button id="prev-btn"
-class="control-btn">
-← Previous Episode
-</button>
+        function changeEpisode(episode) {
 
-<button id="next-btn"
-class="control-btn">
-Next Episode →
-</button>
+            if (episode < 1) return;
 
-</div>
+            if (totalEpisodes && episode > totalEpisodes) return;
 
-</main>
+            currentEpisode = episode;
 
+            const url = new URL(location.href);
 
-<footer class="text-center border-t border-white/10 py-8 mt-12">
+            url.searchParams.set("episode", episode);
 
-<h2 class="logo">chinesXdonghua</h2>
+            history.replaceState({}, "", url);
 
-<p class="text-gray-500 text-xs mt-3">
-Your Ultimate Chinese Animation Destination.
-</p>
+            video.pause();
 
-</footer>
+            video.removeAttribute("src");
 
+            video.load();
 
-<script>
+            message.classList.remove("hidden");
 
-// =================================
-// BASIC CONFIGURATION
-// =================================
+            renderEpisodes();
 
-const params = new URLSearchParams(location.search);
+            updateEpisodeTitle();
 
-const animeId = params.get("id");
+            document.getElementById("server-status").textContent =
+                "Select an available authorized source.";
 
-let currentEpisode = Math.max(
-1,
-parseInt(params.get("ep") || "1", 10) || 1
-);
+        }
 
-const video = document.getElementById("video");
 
+        /* EPISODE TITLE */
 
-// =================================
-// ANIME INFORMATION
-// =================================
+        function updateEpisodeTitle() {
 
-async function loadAnimeInfo() {
+            document.getElementById("episode-title").textContent =
+                `Episode ${currentEpisode}`;
 
-if (!animeId) {
+        }
 
-document.getElementById("anime-title").textContent =
-"Chinese Donghua";
 
-return;
+        /* NEXT / PREVIOUS */
 
-}
+        document.getElementById("next-episode")
+            .addEventListener("click", () => {
 
-try {
+                changeEpisode(currentEpisode + 1);
 
-const query = `
-query ($id:Int) {
-Media(id:$id,type:ANIME) {
-id
-title {
-english
-romaji
-}
-countryOfOrigin
-episodes
-status
-}
-}
-`;
+            });
 
-const response = await fetch(
-"https://graphql.anilist.co",
-{
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"Accept": "application/json"
-},
-body: JSON.stringify({
-query,
-variables: {
-id: Number(animeId)
-}
-})
-}
-);
 
-const result = await response.json();
+        document.getElementById("prev-episode")
+            .addEventListener("click", () => {
 
-const anime = result.data.Media;
+                changeEpisode(currentEpisode - 1);
 
-if (!anime || anime.countryOfOrigin !== "CN") {
-throw new Error("Chinese Donghua not found");
-}
+            });
 
-document.getElementById("anime-title").textContent =
-anime.title.english ||
-anime.title.romaji;
 
-document.getElementById("episode-title").textContent =
-"Episode " + currentEpisode;
+        /* SPEED */
 
-renderEpisodes(anime.episodes);
+        const speeds = [1, 1.25, 1.5, 1.75, 2];
 
-} catch(error) {
+        let speedIndex = 0;
 
-document.getElementById("anime-title").textContent =
-"Chinese Donghua";
+        document.getElementById("speed-button")
+            .addEventListener("click", function () {
 
-renderEpisodes(12);
+                speedIndex = (speedIndex + 1) % speeds.length;
 
-}
+                video.playbackRate = speeds[speedIndex];
 
-}
+                this.textContent = `Speed ${speeds[speedIndex]}x`;
 
+            });
 
-// =================================
-// EPISODE LIST
-// =================================
 
-function renderEpisodes(total) {
+        /* FULLSCREEN */
 
-const container =
-document.getElementById("episode-list");
+        document.getElementById("fullscreen-button")
+            .addEventListener("click", async () => {
 
-const count = Math.min(total || 12, 300);
+                const player = document.querySelector(".player-container");
 
-document.getElementById("episode-count").textContent =
-count + " Episodes";
+                try {
 
-container.innerHTML = "";
+                    if (!document.fullscreenElement) {
 
-for(let i = 1; i <= count; i++) {
+                        await player.requestFullscreen();
 
-const button = document.createElement("button");
+                    } else {
 
-button.className =
-"episode-card text-sm font-bold " +
-(i === currentEpisode ? "active" : "");
+                        await document.exitFullscreen();
 
-button.textContent = "EP " + i;
+                    }
 
-button.onclick = () => {
+                } catch (error) {
 
-currentEpisode = i;
+                    console.log("Fullscreen unavailable", error);
 
-const url = new URL(location.href);
+                }
 
-url.searchParams.set("ep", i);
+            });
 
-location.href = url.toString();
 
-};
+        /* DOUBLE TAP SEEK */
 
-container.appendChild(button);
+        let lastTap = 0;
 
-}
+        document.querySelector(".player-container")
+            .addEventListener("touchend", event => {
 
-}
+                const now = Date.now();
 
+                const rect = video.getBoundingClientRect();
 
-// =================================
-// DOUBLE TAP SEEK
-// =================================
+                const x = event.changedTouches[0].clientX;
 
-let lastTap = 0;
+                const isLeft = x < rect.left + rect.width / 2;
 
-let tapTimer;
+                if (now - lastTap < 300) {
 
-function setupDoubleTap(element, direction, feedback) {
+                    if (isLeft) {
 
-element.addEventListener("touchend", function(event) {
+                        video.currentTime = Math.max(
+                            0,
+                            video.currentTime - 10
+                        );
 
-if(event.changedTouches.length !== 1) return;
+                        showSeek("seek-back");
 
-const now = Date.now();
+                    } else {
 
-if(now - lastTap < 300) {
+                        video.currentTime = Math.min(
+                            video.duration || Infinity,
+                            video.currentTime + 10
+                        );
 
-clearTimeout(tapTimer);
+                        showSeek("seek-forward");
 
-if(video.src) {
+                    }
 
-video.currentTime = Math.max(
-0,
-video.currentTime + direction * 10
-);
+                }
 
-}
+                lastTap = now;
 
-showSeekAnimation(feedback, direction);
+            });
 
-lastTap = 0;
 
-} else {
+        function showSeek(id) {
 
-lastTap = now;
+            const element = document.getElementById(id);
 
-tapTimer = setTimeout(() => {
+            element.classList.add("show");
 
-lastTap = 0;
+            setTimeout(() => {
+                element.classList.remove("show");
+            }, 500);
 
-}, 300);
+        }
 
-}
 
-});
+        /* VIDEO MESSAGE */
 
-}
+        video.addEventListener("play", () => {
 
-function showSeekAnimation(element, direction) {
+            message.classList.add("hidden");
 
-element.textContent =
-direction < 0
-? "⏪ -10 Seconds"
-: "+10 Seconds ⏩";
+        });
 
-element.classList.add("show");
 
-setTimeout(() => {
+        video.addEventListener("pause", () => {
 
-element.classList.remove("show");
+            message.classList.remove("hidden");
 
-}, 650);
+        });
 
-}
 
+        /* START */
 
-setupDoubleTap(
-document.getElementById("left-seek"),
--1,
-document.getElementById("back-feedback")
-);
+        loadWatchPage();
 
-setupDoubleTap(
-document.getElementById("right-seek"),
-1,
-document.getElementById("forward-feedback")
-);
-
-
-// =================================
-// PLAY / PAUSE
-// =================================
-
-document.getElementById("play-btn").onclick = () => {
-
-if(!video.src) {
-
-showMessage("Please connect an authorized video source first.");
-
-return;
-
-}
-
-if(video.paused) {
-
-video.play();
-
-} else {
-
-video.pause();
-
-}
-
-};
-
-video.addEventListener("play", () => {
-
-document.getElementById("play-btn").textContent =
-"⏸ Pause";
-
-document.getElementById("loading-screen").style.display =
-"none";
-
-});
-
-video.addEventListener("pause", () => {
-
-document.getElementById("play-btn").textContent =
-"▶ Play";
-
-});
-
-
-// =================================
-// VOLUME
-// =================================
-
-document.getElementById("mute-btn").onclick = () => {
-
-video.muted = !video.muted;
-
-document.getElementById("mute-btn").textContent =
-video.muted ? "🔇" : "🔊";
-
-};
-
-
-// =================================
-// PLAYBACK SPEED
-// =================================
-
-document.getElementById("speed").onchange = (event) => {
-
-video.playbackRate = Number(event.target.value);
-
-};
-
-
-// =================================
-// PROGRESS BAR
-// =================================
-
-video.addEventListener("timeupdate", () => {
-
-if(!Number.isFinite(video.duration) || video.duration <= 0) return;
-
-const percent =
-(video.currentTime / video.duration) * 100;
-
-document.getElementById("progress").value =
-percent;
-
-document.getElementById("current-time").textContent =
-formatTime(video.currentTime);
-
-document.getElementById("duration").textContent =
-formatTime(video.duration);
-
-});
-
-document.getElementById("progress").oninput = (event) => {
-
-if(video.src && Number.isFinite(video.duration)) {
-
-video.currentTime =
-(event.target.value / 100) * video.duration;
-
-}
-
-};
-
-
-function formatTime(seconds) {
-
-if(!Number.isFinite(seconds)) return "00:00";
-
-const min = Math.floor(seconds / 60);
-
-const sec = Math.floor(seconds % 60);
-
-return String(min).padStart(2,"0") +
-":" +
-String(sec).padStart(2,"0");
-
-}
-
-
-// =================================
-// FULLSCREEN
-// =================================
-
-document.getElementById("fullscreen-btn").onclick = () => {
-
-const player = document.getElementById("player-area");
-
-if(!document.fullscreenElement) {
-
-if(player.requestFullscreen) {
-
-player.requestFullscreen();
-
-}
-
-} else {
-
-document.exitFullscreen();
-
-}
-
-};
-
-
-// =================================
-// SERVER SELECTION
-// =================================
-
-document.querySelectorAll(".server-btn").forEach(button => {
-
-button.onclick = () => {
-
-document.querySelectorAll(".server-btn").forEach(btn => {
-
-btn.classList.remove("active");
-
-});
-
-button.classList.add("active");
-
-const server = button.dataset.server;
-
-document.getElementById("server-status").textContent =
-server === "auto"
-? "Auto mode selected. Waiting for an authorized video provider."
-: "Selected " + button.textContent.trim() +
-". A provider integration is required before playback.";
-
-};
-
-});
-
-
-// =================================
-// PREVIOUS / NEXT
-// =================================
-
-function changeEpisode(number) {
-
-if(number < 1) return;
-
-currentEpisode = number;
-
-const url = new URL(location.href);
-
-url.searchParams.set("ep", number);
-
-location.href = url.toString();
-
-}
-
-document.getElementById("prev-btn").onclick = () => {
-
-changeEpisode(currentEpisode - 1);
-
-};
-
-document.getElementById("next-btn").onclick = () => {
-
-changeEpisode(currentEpisode + 1);
-
-};
-
-
-// =================================
-// MESSAGES
-// =================================
-
-function showMessage(message) {
-
-alert(message);
-
-}
-
-
-// =================================
-// INITIALIZE
-// =================================
-
-loadAnimeInfo();
-
-</script>
+    </script>
 
 </body>
 </html>
