@@ -1,5 +1,5 @@
 /* =====================================
-   chinesXdonghua - Homepage
+   chinesXdonghua - Search System
 ===================================== */
 
 (() => {
@@ -7,29 +7,47 @@
 
     const API_URL = "https://graphql.anilist.co";
 
-    const QUERY = `
-        query (
-            $page: Int,
-            $perPage: Int,
-            $sort: [MediaSort],
-            $status: MediaStatus
-        ) {
-            Page(
-                page: $page,
-                perPage: $perPage
-            ) {
+    const input = document.getElementById("search-input");
+    const resultsContainer = document.getElementById("search-results");
+    const suggestionsContainer = document.getElementById("search-suggestions");
+
+    const searchButton = document.getElementById("search-btn");
+    const loadMoreButton = document.getElementById("load-more");
+
+    const resultsTitle = document.getElementById("results-title");
+    const resultsCount = document.getElementById("results-count");
+
+    let currentSearch = "";
+    let currentPage = 1;
+    let hasMore = false;
+    let isLoading = false;
+    let searchTimer = null;
+
+    const PER_PAGE = 20;
+
+    // ---------------------------------
+    // GraphQL Query
+    // ---------------------------------
+
+    const SEARCH_QUERY = `
+        query ($search: String, $page: Int, $perPage: Int) {
+            Page(page: $page, perPage: $perPage) {
+                pageInfo {
+                    hasNextPage
+                }
+
                 media(
+                    search: $search,
                     type: ANIME,
                     countryOfOrigin: "CN",
                     isAdult: false,
-                    sort: $sort,
-                    status: $status
+                    sort: POPULARITY_DESC
                 ) {
                     id
 
                     title {
-                        romaji
                         english
+                        romaji
                         native
                     }
 
@@ -38,19 +56,11 @@
                         large
                     }
 
-                    bannerImage
-
                     episodes
                     status
                     averageScore
-                    popularity
                     seasonYear
                     format
-
-                    nextAiringEpisode {
-                        episode
-                        airingAt
-                    }
                 }
             }
         }
@@ -88,20 +98,10 @@
     }
 
     // ---------------------------------
-    // API Request
+    // API Search
     // ---------------------------------
 
-    async function fetchDonghua(sort, status = null) {
-        const variables = {
-            page: 1,
-            perPage: 20,
-            sort: [sort]
-        };
-
-        if (status) {
-            variables.status = status;
-        }
-
+    async function searchDonghua(query, page = 1) {
         const response = await fetch(API_URL, {
             method: "POST",
 
@@ -111,83 +111,48 @@
             },
 
             body: JSON.stringify({
-                query: QUERY,
-                variables
+                query: SEARCH_QUERY,
+
+                variables: {
+                    search: query,
+                    page: page,
+                    perPage: PER_PAGE
+                }
             })
         });
 
         if (!response.ok) {
-            throw new Error("AniList API request failed.");
+            throw new Error("Search request failed.");
         }
 
         const result = await response.json();
 
         if (result.errors) {
-            throw new Error("Unable to fetch Donghua.");
+            throw new Error("Unable to search Donghua.");
         }
 
-        return result.data?.Page?.media || [];
+        return result.data.Page;
     }
 
     // ---------------------------------
-    // Loading UI
+    // Search Card
     // ---------------------------------
 
-    function showLoading(container) {
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Discovering Donghua...</p>
-            </div>
-        `;
-    }
-
-    function showError(container) {
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>Unable to load Donghua.</p>
-                <button class="btn btn-primary" onclick="location.reload()">
-                    Try Again
-                </button>
-            </div>
-        `;
-    }
-
-    // ---------------------------------
-    // Donghua Card
-    // ---------------------------------
-
-    function createCard(anime) {
+    function createSearchCard(anime) {
         const title = getTitle(anime);
+
         const image = getImage(anime);
 
-        const score = anime.averageScore
-            ? `${anime.averageScore}%`
-            : "N/A";
-
-        const episode = anime.nextAiringEpisode
-            ? `EP ${anime.nextAiringEpisode.episode}`
-            : anime.episodes
-                ? `${anime.episodes} Episodes`
-                : "Episodes TBA";
-
-        const status = anime.status === "RELEASING"
-            ? "ONGOING"
-            : anime.status === "FINISHED"
-                ? "COMPLETED"
-                : "UPCOMING";
+        const status = anime.status
+            ? anime.status.replaceAll("_", " ")
+            : "UNKNOWN";
 
         return `
             <article
-                class="anime-card"
-                data-anime-id="${anime.id}"
+                class="anime-card search-card"
+                data-id="${anime.id}"
                 tabindex="0"
                 role="link"
-                aria-label="View ${escapeHTML(title)}"
             >
 
                 <div class="anime-poster">
@@ -199,12 +164,8 @@
                         onerror="this.style.opacity='0'"
                     >
 
-                    <span class="anime-badge">
-                        ${status}
-                    </span>
-
                     <span class="anime-score">
-                        ⭐ ${score}
+                        ⭐ ${anime.averageScore || "N/A"}
                     </span>
 
                 </div>
@@ -216,7 +177,8 @@
                     </h3>
 
                     <p>
-                        ${escapeHTML(episode)}
+                        ${escapeHTML(status)}
+                        • ${anime.episodes || "?"} Episodes
                     </p>
 
                 </div>
@@ -226,120 +188,266 @@
     }
 
     // ---------------------------------
-    // Render Cards
+    // Render Results
     // ---------------------------------
 
-    function renderCards(container, animeList) {
-        if (!container) return;
+    function renderResults(animeList, append = false) {
+        if (!resultsContainer) return;
 
-        if (!animeList.length) {
-            container.innerHTML = `
+        if (!append && animeList.length === 0) {
+            resultsContainer.innerHTML = `
                 <div class="empty-state">
-                    <p>No Donghua found.</p>
+                    <h3>No Donghua Found</h3>
+                    <p>Try another anime name.</p>
                 </div>
             `;
+
             return;
         }
 
-        container.innerHTML = animeList
-            .map(createCard)
-            .join("");
+        const html = animeList.map(createSearchCard).join("");
 
-        container.querySelectorAll(".anime-card").forEach(card => {
-            function openAnime() {
-                const id = card.dataset.animeId;
+        if (append) {
+            resultsContainer.insertAdjacentHTML("beforeend", html);
+        } else {
+            resultsContainer.innerHTML = html;
+        }
 
-                window.location.href = `anime.html?id=${id}`;
+        resultsContainer.querySelectorAll(".search-card").forEach(card => {
+            if (card.dataset.listenerAdded) return;
+
+            card.dataset.listenerAdded = "true";
+
+            function openDetails() {
+                window.location.href =
+                    `anime.html?id=${card.dataset.id}`;
             }
 
-            card.addEventListener("click", openAnime);
+            card.addEventListener("click", openDetails);
 
             card.addEventListener("keydown", event => {
                 if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    openAnime();
+                    openDetails();
                 }
             });
         });
     }
 
     // ---------------------------------
-    // Load Sections
+    // Loading
     // ---------------------------------
 
-    async function loadSection(id, sort, status = null) {
-        const container = document.getElementById(id);
+    function showLoading() {
+        if (!resultsContainer) return;
 
-        if (!container) return;
+        resultsContainer.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Searching Donghua...</p>
+            </div>
+        `;
+    }
 
-        showLoading(container);
+    // ---------------------------------
+    // Main Search
+    // ---------------------------------
+
+    async function performSearch(query, page = 1) {
+        query = query.trim();
+
+        if (!query || isLoading) return;
+
+        if (page === 1) {
+            currentSearch = query;
+            currentPage = 1;
+
+            showLoading();
+
+            if (resultsTitle) {
+                resultsTitle.textContent = `Results for "${query}"`;
+            }
+        }
+
+        isLoading = true;
+
+        if (loadMoreButton) {
+            loadMoreButton.disabled = true;
+            loadMoreButton.textContent = "Loading...";
+        }
 
         try {
-            const animeList = await fetchDonghua(sort, status);
+            const data = await searchDonghua(query, page);
 
-            renderCards(container, animeList);
+            const animeList = data.media || [];
+
+            renderResults(animeList, page > 1);
+
+            hasMore = data.pageInfo.hasNextPage;
+
+            currentPage = page;
+
+            if (resultsCount) {
+                const total = resultsContainer
+                    ? resultsContainer.querySelectorAll(".search-card").length
+                    : animeList.length;
+
+                resultsCount.textContent = `${total} Donghua found`;
+            }
 
         } catch (error) {
-            console.error(`Error loading ${id}:`, error);
+            console.error(error);
 
-            showError(container);
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <p>Search failed. Please try again.</p>
+                        <button
+                            class="btn btn-primary"
+                            onclick="location.reload()"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                `;
+            }
+
+        } finally {
+            isLoading = false;
+
+            if (loadMoreButton) {
+                loadMoreButton.disabled = false;
+                loadMoreButton.textContent = "Load More";
+                loadMoreButton.style.display =
+                    hasMore ? "block" : "none";
+            }
         }
     }
 
     // ---------------------------------
-    // Homepage
+    // Suggestions
     // ---------------------------------
 
-    async function loadHomepage() {
-        const sections = [
-            {
-                id: "trending-list",
-                sort: "TRENDING_DESC",
-                status: null
-            },
-            {
-                id: "ongoing-list",
-                sort: "POPULARITY_DESC",
-                status: "RELEASING"
-            },
-            {
-                id: "completed-list",
-                sort: "POPULARITY_DESC",
-                status: "FINISHED"
-            },
-            {
-                id: "latest-list",
-                sort: "START_DATE_DESC",
-                status: null
-            }
+    function hideSuggestions() {
+        if (!suggestionsContainer) return;
+
+        suggestionsContainer.innerHTML = "";
+        suggestionsContainer.classList.remove("active");
+    }
+
+    function showSuggestions(query) {
+        if (!suggestionsContainer) return;
+
+        const suggestions = [
+            query,
+            `${query} Season 2`,
+            `${query} Donghua`
         ];
 
-        await Promise.all(
-            sections.map(section => {
-                return loadSection(
-                    section.id,
-                    section.sort,
-                    section.status
-                );
-            })
-        );
+        suggestionsContainer.innerHTML = suggestions.map(item => `
+            <button
+                type="button"
+                class="suggestion-item"
+                data-search="${escapeHTML(item)}"
+            >
+                🔍 ${escapeHTML(item)}
+            </button>
+        `).join("");
+
+        suggestionsContainer.classList.add("active");
+
+        suggestionsContainer.querySelectorAll("[data-search]")
+            .forEach(button => {
+                button.addEventListener("click", () => {
+                    const value = button.dataset.search;
+
+                    input.value = value;
+
+                    hideSuggestions();
+
+                    performSearch(value);
+                });
+            });
+    }
+
+    // ---------------------------------
+    // Events
+    // ---------------------------------
+
+    searchButton?.addEventListener("click", () => {
+        hideSuggestions();
+
+        performSearch(input.value);
+    });
+
+    input?.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+            hideSuggestions();
+
+            performSearch(input.value);
+        }
+
+        if (event.key === "Escape") {
+            hideSuggestions();
+        }
+    });
+
+    input?.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+
+        const query = input.value.trim();
+
+        if (query.length < 2) {
+            hideSuggestions();
+            return;
+        }
+
+        searchTimer = setTimeout(() => {
+            showSuggestions(query);
+        }, 400);
+    });
+
+    loadMoreButton?.addEventListener("click", () => {
+        if (hasMore && !isLoading) {
+            performSearch(currentSearch, currentPage + 1);
+        }
+    });
+
+    document.addEventListener("click", event => {
+        if (
+            suggestionsContainer &&
+            !suggestionsContainer.contains(event.target) &&
+            event.target !== input
+        ) {
+            hideSuggestions();
+        }
+    });
+
+    // ---------------------------------
+    // URL Search
+    // ---------------------------------
+
+    function loadURLSearch() {
+        const params = new URLSearchParams(location.search);
+
+        const query = params.get("q");
+
+        if (query && input) {
+            input.value = query;
+            performSearch(query);
+        }
     }
 
     // ---------------------------------
     // Public API
     // ---------------------------------
 
-    window.DonghuaHome = {
-        loadHomepage,
-        fetchDonghua,
-        createCard,
-        renderCards
+    window.DonghuaSearch = {
+        searchDonghua,
+        performSearch,
+        hideSuggestions
     };
 
-    document.addEventListener("DOMContentLoaded", () => {
-        if (document.getElementById("trending-list")) {
-            loadHomepage();
-        }
-    });
+    document.addEventListener("DOMContentLoaded", loadURLSearch);
 
 })();
