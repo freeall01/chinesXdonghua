@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08090d">
 
 <title>chinesXdonghua | Chinese Animation</title>
 
@@ -23,7 +22,6 @@ body {
 header {
     background: rgba(8,9,13,0.92);
     backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
 }
 
 .logo {
@@ -83,37 +81,6 @@ header {
     border-radius: 4px;
     font-size: 10px;
 }
-
-/* Mobile navigation row (scrolls sideways, no hamburger needed) */
-.mobile-nav {
-    scrollbar-width: none;
-}
-.mobile-nav::-webkit-scrollbar {
-    display: none;
-}
-
-/* Loading placeholder cards */
-.skeleton {
-    min-width: 145px;
-    height: 215px;
-    border-radius: 10px;
-    background: linear-gradient(90deg,#14151c 25%,#1e202b 50%,#14151c 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite linear;
-}
-
-@keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.retry-btn {
-    background: rgba(255,255,255,.1);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-left: 8px;
-}
 </style>
 </head>
 
@@ -135,42 +102,15 @@ chinesX<span class="text-white">donghua</span>
 <a href="#trending">Trending</a>
 <a href="#ongoing">Ongoing</a>
 <a href="#completed">Completed</a>
-<a href="#upcoming">Upcoming</a>
 <a href="#latest">Latest</a>
 
 </nav>
 
-<button onclick="toggleSearch()" class="text-xl" aria-label="Search">
+<button onclick="searchAnime()" class="text-xl">
 ⌕
 </button>
 
 </div>
-
-<!-- Mobile menu (visible only on phones) -->
-<nav class="mobile-nav md:hidden flex gap-5 overflow-x-auto px-4 pb-3 text-sm text-gray-300 whitespace-nowrap">
-<a href="index.html" class="text-orange-400">Home</a>
-<a href="#trending">Trending</a>
-<a href="#ongoing">Ongoing</a>
-<a href="#completed">Completed</a>
-<a href="#upcoming">Upcoming</a>
-<a href="#latest">Latest</a>
-</nav>
-
-<!-- Search bar (opens when you tap the search icon) -->
-<form id="search-bar" onsubmit="submitSearch(event)"
-class="hidden max-w-7xl mx-auto px-4 pb-3 flex gap-2">
-
-<input id="search-input" type="text"
-placeholder="Search Donghua..."
-class="flex-1 bg-white/10 rounded-lg px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-orange-500">
-
-<button type="submit"
-class="bg-orange-500 px-4 py-2 rounded-lg text-sm font-bold">
-Search
-</button>
-
-</form>
-
 </header>
 
 
@@ -213,9 +153,9 @@ Latest Episodes
 </section>
 
 
-<main class="max-w-7xl mx-auto px-4 py-10">
-
 <!-- TRENDING -->
+
+<main class="max-w-7xl mx-auto px-4 py-10">
 
 <section id="trending">
 
@@ -225,6 +165,9 @@ Latest Episodes
 
 <div id="trending-list"
 class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading Donghua...</p>
+
 </div>
 
 </section>
@@ -240,6 +183,9 @@ class="flex gap-4 overflow-x-auto pb-5">
 
 <div id="ongoing-list"
 class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading...</p>
+
 </div>
 
 </section>
@@ -255,21 +201,9 @@ class="flex gap-4 overflow-x-auto pb-5">
 
 <div id="completed-list"
 class="flex gap-4 overflow-x-auto pb-5">
-</div>
 
-</section>
+<p class="text-gray-400">Loading...</p>
 
-
-<!-- UPCOMING -->
-
-<section id="upcoming" class="mt-12">
-
-<h2 class="section-title">
-⏳ Upcoming Releases
-</h2>
-
-<div id="upcoming-list"
-class="flex gap-4 overflow-x-auto pb-5">
 </div>
 
 </section>
@@ -280,11 +214,14 @@ class="flex gap-4 overflow-x-auto pb-5">
 <section id="latest" class="mt-12">
 
 <h2 class="section-title">
-🆕 Recently Started Donghua
+🆕 Latest Donghua
 </h2>
 
 <div id="latest-list"
 class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading...</p>
+
 </div>
 
 </section>
@@ -303,7 +240,7 @@ Your Ultimate Chinese Animation Destination.
 </p>
 
 <p class="text-gray-600 text-xs mt-5">
-Metadata by AniList · © 2026 chinesXdonghua
+© 2026 chinesXdonghua
 </p>
 
 </footer>
@@ -313,218 +250,183 @@ Metadata by AniList · © 2026 chinesXdonghua
 
 const API = "https://graphql.anilist.co";
 
-/* Only real series formats. This hides music videos, specials etc. */
-const FORMATS = ["TV", "TV_SHORT", "ONA", "MOVIE"];
-
 const QUERY = `
-query ($sort: [MediaSort], $status: MediaStatus, $formats: [MediaFormat]) {
+query ($sort: [MediaSort], $status: MediaStatus) {
 
-  Page(page: 1, perPage: 15) {
+Page(page: 1, perPage: 15) {
 
-    media(
-      type: ANIME
-      countryOfOrigin: "CN"
-      sort: $sort
-      status: $status
-      format_in: $formats
-      isAdult: false
-    ) {
+media(
+type: ANIME
+countryOfOrigin: "CN"
+sort: $sort
+status: $status
+isAdult: false
+) {
 
-      id
-      title {
-        romaji
-        english
-      }
-      coverImage {
-        large
-      }
-      episodes
-      status
-      averageScore
-      seasonYear
-      format
+id
+title {
+romaji
+english
+}
+coverImage {
+extraLarge
+}
+episodes
+status
+averageScore
+seasonYear
+format
 
-    }
+}
 
-  }
+}
 
 }
 `;
 
 
-/* Returns an array on success, or null if the request failed. */
 async function getDonghua(sort, status = null) {
 
-  try {
+try {
 
-    const response = await fetch(API, {
+const response = await fetch(API, {
 
-      method: "POST",
+method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
+headers: {
+"Content-Type": "application/json",
+"Accept": "application/json"
+},
 
-      body: JSON.stringify({
-        query: QUERY,
-        variables: {
-          sort: [sort],
-          status: status,
-          formats: FORMATS
-        }
-      })
+body: JSON.stringify({
 
-    });
+query: QUERY,
 
-    const data = await response.json();
-
-    if (!response.ok || !data.data) {
-      throw new Error("API unavailable");
-    }
-
-    return data.data.Page.media;
-
-  } catch (error) {
-
-    console.error(error);
-
-    return null;
-
-  }
-
+variables: {
+sort: [sort],
+status: status
 }
 
+})
 
-/* Stops titles from breaking the HTML */
-function escapeHtml(text) {
+});
 
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+const data = await response.json();
 
+if (!response.ok || !data.data) {
+throw new Error("API unavailable");
 }
 
+return data.data.Page.media;
 
-function skeletons() {
+} catch (error) {
 
-  return Array.from({ length: 8 })
-    .map(() => `<div class="skeleton"></div>`)
-    .join("");
+console.error(error);
+
+return [];
+
+}
 
 }
 
 
 function createCards(anime) {
 
-  if (anime === null) {
-    return `
-      <p class="text-gray-400 text-sm">
-        Could not load data.
-        <button class="retry-btn" onclick="loadHomepage()">Retry</button>
-      </p>`;
-  }
+if (!anime.length) {
+return `<p class="text-gray-500">No Donghua available.</p>`;
+}
 
-  if (!anime.length) {
-    return `<p class="text-gray-500">No Donghua available.</p>`;
-  }
+return anime.map(item => {
 
-  return anime.map(item => {
+const title =
+item.title.english ||
+item.title.romaji ||
+"Unknown Donghua";
 
-    const title = escapeHtml(
-      item.title.english ||
-      item.title.romaji ||
-      "Unknown Donghua"
-    );
+return `
 
-    return `
+<div class="card" onclick="openAnime(${item.id})">
 
-    <div class="card" onclick="openAnime(${item.id})">
+<img
+src="${item.coverImage.extraLarge}"
+alt="${title}"
+loading="lazy"
+>
 
-      <img
-        src="${item.coverImage.large}"
-        alt="${title}"
-        loading="lazy"
-      >
+<h3 class="text-sm font-bold mt-2 line-clamp-2">
+${title}
+</h3>
 
-      <h3 class="text-sm font-bold mt-2 line-clamp-2">
-        ${title}
-      </h3>
+<p class="text-xs text-gray-400 mt-1">
 
-      <p class="text-xs text-gray-400 mt-1">
-        ${item.seasonYear || "TBA"}
-        ·
-        ${item.episodes || "?"} Episodes
-      </p>
+${item.seasonYear || "Unknown"}
 
-    </div>
+·
 
-    `;
+${item.episodes || "?"} Episodes
 
-  }).join("");
+</p>
+
+</div>
+
+`;
+
+}).join("");
 
 }
 
 
-const SECTIONS = [
-  { id: "trending-list",  sort: "TRENDING_DESC",   status: null },
-  { id: "ongoing-list",   sort: "POPULARITY_DESC", status: "RELEASING" },
-  { id: "completed-list", sort: "POPULARITY_DESC", status: "FINISHED" },
-  { id: "upcoming-list",  sort: "POPULARITY_DESC", status: "NOT_YET_RELEASED" },
-  { id: "latest-list",    sort: "START_DATE_DESC", status: "RELEASING" }
-];
-
-
-/* All sections load at the same time, so the page is faster */
 async function loadHomepage() {
 
-  SECTIONS.forEach(section => {
-    document.getElementById(section.id).innerHTML = skeletons();
-  });
+const trending = await getDonghua("TRENDING_DESC");
 
-  await Promise.all(SECTIONS.map(async section => {
+document.getElementById("trending-list").innerHTML =
+createCards(trending);
 
-    const list = await getDonghua(section.sort, section.status);
 
-    document.getElementById(section.id).innerHTML = createCards(list);
+const ongoing = await getDonghua(
+"POPULARITY_DESC",
+"RELEASING"
+);
 
-  }));
+document.getElementById("ongoing-list").innerHTML =
+createCards(ongoing);
+
+
+const completed = await getDonghua(
+"POPULARITY_DESC",
+"FINISHED"
+);
+
+document.getElementById("completed-list").innerHTML =
+createCards(completed);
+
+
+const latest = await getDonghua("START_DATE_DESC");
+
+document.getElementById("latest-list").innerHTML =
+createCards(latest);
 
 }
 
 
 function openAnime(id) {
 
-  window.location.href = "anime.html?id=" + id;
+window.location.href = "anime.html?id=" + id;
 
 }
 
 
-function toggleSearch() {
+function searchAnime() {
 
-  const bar = document.getElementById("search-bar");
+const name = prompt("Enter Donghua name:");
 
-  bar.classList.toggle("hidden");
+if (name) {
 
-  if (!bar.classList.contains("hidden")) {
-    document.getElementById("search-input").focus();
-  }
+window.location.href =
+"search.html?q=" + encodeURIComponent(name);
 
 }
-
-
-function submitSearch(event) {
-
-  event.preventDefault();
-
-  const name = document.getElementById("search-input").value.trim();
-
-  if (name) {
-    window.location.href = "search.html?q=" + encodeURIComponent(name);
-  }
 
 }
 
