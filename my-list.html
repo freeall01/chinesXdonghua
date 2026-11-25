@@ -1,76 +1,445 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#08090d">
+
 <title>My List | chinesXdonghua</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="asset/css/pages.css">
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #08090d;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background: rgba(8,9,13,.95);
+    backdrop-filter: blur(15px);
+}
+
+.logo {
+    color: #ff6b35;
+    font-weight: 900;
+}
+
+.tab {
+    padding: 12px 20px;
+    border-bottom: 2px solid transparent;
+    color: #999;
+}
+
+.tab.active {
+    color: #ff6b35;
+    border-color: #ff6b35;
+}
+
+.card {
+    min-width: 145px;
+    max-width: 180px;
+    flex: 0 0 145px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card img {
+    width: 100%;
+    height: 215px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #171923;
+}
+
+.empty {
+    padding: 50px 15px;
+    text-align: center;
+    color: #777;
+}
+
+</style>
 </head>
 
 <body>
 
-<div id="navbar"></div>
+<!-- NAVBAR -->
 
-<main class="max-w-7xl mx-auto px-4 py-8">
+<header class="sticky top-0 z-50 border-b border-white/10">
 
-  <h1 class="section-title">My List</h1>
-  <p class="text-gray-500 text-xs mb-6">Saved on this device only.</p>
+<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 
-  <div id="list" class="card-grid"></div>
-  <p id="empty" class="text-gray-400 hidden">
-    Your list is empty. Open a Donghua and tap "+ My List".
-  </p>
+<a href="index.html" class="logo text-xl">
+chinesX<span class="text-white">donghua</span>
+</a>
+
+<nav class="flex gap-5 text-sm text-gray-300">
+
+<a href="index.html">Home</a>
+
+<a href="search.html">Search</a>
+
+<a href="schedule.html">Schedule</a>
+
+</nav>
+
+</div>
+
+</header>
+
+
+<!-- PAGE HEADER -->
+
+<main class="max-w-7xl mx-auto px-4 py-10">
+
+<h1 class="text-3xl md:text-4xl font-black">
+My Collection
+</h1>
+
+<p class="text-gray-400 mt-2">
+Your personal Donghua library.
+</p>
+
+
+<!-- TABS -->
+
+<div class="flex gap-5 border-b border-white/10 mt-8">
+
+<button id="tab-list" class="tab active">
+❤️ My List
+</button>
+
+<button id="tab-history" class="tab">
+▶ Continue Watching
+</button>
+
+</div>
+
+
+<!-- MY LIST -->
+
+<section id="my-list-section" class="mt-8">
+
+<div class="flex justify-between items-center mb-5">
+
+<h2 class="text-xl font-bold">
+Favourite Donghua
+</h2>
+
+<span id="list-count" class="text-gray-400 text-sm">
+0 Titles
+</span>
+
+</div>
+
+<div id="my-list"
+class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-5">
+
+</div>
+
+</section>
+
+
+<!-- HISTORY -->
+
+<section id="history-section" class="mt-8 hidden">
+
+<div class="flex justify-between items-center mb-5">
+
+<h2 class="text-xl font-bold">
+Recently Watched
+</h2>
+
+<button id="clear-history"
+class="text-red-400 text-sm">
+
+Clear History
+
+</button>
+
+</div>
+
+<div id="watch-history"
+class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-5">
+
+</div>
+
+</section>
 
 </main>
 
-<div id="footer"></div>
 
-<script src="asset/js/nav.js"></script>
+<!-- FOOTER -->
+
+<footer class="border-t border-white/10 mt-20 py-8 text-center">
+
+<h2 class="logo text-xl">
+chinesXdonghua
+</h2>
+
+<p class="text-gray-500 text-sm mt-3">
+Your Personal Donghua Library
+</p>
+
+</footer>
+
+
+<script src="asset/js/app.js"></script>
+
 <script>
-(function () {
-  "use strict";
 
-  var CX = window.CX;
-  var listEl = document.getElementById("list");
-  var emptyEl = document.getElementById("empty");
+const myListSection =
+document.getElementById("my-list-section");
 
-  function render() {
-    var items = CX.getList();
+const historySection =
+document.getElementById("history-section");
 
-    emptyEl.classList.toggle("hidden", items.length > 0);
+const listTab =
+document.getElementById("tab-list");
 
-    listEl.innerHTML = items.map(function (item) {
-      var title = CX.esc(item.title);
-      return (
-        '<div>' +
-        '<a href="anime.html?id=' + item.id + '" class="card block">' +
-        '<img src="' + CX.esc(item.cover) + '" alt="' + title + '" loading="lazy">' +
-        '<h3 class="text-sm font-bold mt-2 line-clamp-2">' + title + "</h3>" +
-        '<p class="text-xs text-gray-400 mt-1">' +
-        CX.esc(item.year || "TBA") + " · " + CX.esc(item.episodes || "?") + " Episodes</p>" +
-        "</a>" +
-        '<button data-remove="' + item.id + '" class="text-xs text-gray-500 hover:text-orange-400 mt-2">Remove</button>' +
-        "</div>"
-      );
-    }).join("");
-  }
+const historyTab =
+document.getElementById("tab-history");
 
-  listEl.addEventListener("click", function (event) {
-    var id = parseInt(event.target.getAttribute("data-remove"), 10);
-    if (!id) return;
 
-    var item = CX.getList().find(function (entry) { return entry.id === id; });
-    if (item) CX.toggleList(item);
-    render();
-  });
+// SWITCH TABS
 
-  render();
-})();
+listTab.addEventListener("click", () => {
+
+myListSection.classList.remove("hidden");
+
+historySection.classList.add("hidden");
+
+listTab.classList.add("active");
+
+historyTab.classList.remove("active");
+
+});
+
+historyTab.addEventListener("click", () => {
+
+historySection.classList.remove("hidden");
+
+myListSection.classList.add("hidden");
+
+historyTab.classList.add("active");
+
+listTab.classList.remove("active");
+
+});
+
+
+// RENDER MY LIST
+
+function renderMyList() {
+
+const container =
+document.getElementById("my-list");
+
+const list = DonghuaApp.getMyList();
+
+document.getElementById("list-count").textContent =
+list.length + " Titles";
+
+if (!list.length) {
+
+container.innerHTML = `
+<div class="empty col-span-full">
+<div class="text-5xl mb-4">❤️</div>
+<h3 class="text-xl font-bold">Your List Is Empty</h3>
+<p class="mt-2 text-sm">Add your favourite Donghua to see them here.</p>
+<a href="index.html" class="inline-block mt-5 bg-orange-500 px-5 py-3 rounded-lg">
+Explore Donghua
+</a>
+</div>
+`;
+
+return;
+
+}
+
+container.innerHTML = list.map(item => `
+
+<div class="card">
+
+<img
+src="${escapeHTML(item.image || "")}"
+alt="Donghua Poster"
+loading="lazy"
+onclick="openAnime(${Number(item.id)})"
+>
+
+<h3 class="font-bold text-sm mt-2">
+${escapeHTML(item.title)}
+</h3>
+
+<button
+onclick="removeAnime(${Number(item.id)})"
+class="text-red-400 text-xs mt-2">
+
+✕ Remove
+
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+
+// RENDER HISTORY
+
+function renderHistory() {
+
+const container =
+document.getElementById("watch-history");
+
+const history = DonghuaApp.getHistory();
+
+if (!history.length) {
+
+container.innerHTML = `
+<div class="empty col-span-full">
+<div class="text-5xl mb-4">▶</div>
+<h3 class="text-xl font-bold">No Watch History</h3>
+<p class="mt-2 text-sm">Your recently watched Donghua will appear here.</p>
+</div>
+`;
+
+return;
+
+}
+
+container.innerHTML = history.map(item => `
+
+<div class="card">
+
+<img
+src="${escapeHTML(item.image || "")}"
+alt="Donghua Poster"
+loading="lazy"
+onclick="continueWatching(${Number(item.id)}, ${Number(item.episode || 1)})"
+>
+
+<h3 class="font-bold text-sm mt-2">
+${escapeHTML(item.title)}
+</h3>
+
+<p class="text-xs text-gray-400 mt-1">
+Episode ${Number(item.episode || 1)}
+</p>
+
+<button
+onclick="removeHistory(${Number(item.id)})"
+class="text-red-400 text-xs mt-2">
+
+✕ Remove
+
+</button>
+
+</div>
+
+`).join("");
+
+}
+
+
+// REMOVE ANIME
+
+function removeAnime(id) {
+
+DonghuaApp.removeFromList(id);
+
+renderMyList();
+
+}
+
+
+// REMOVE HISTORY
+
+function removeHistory(id) {
+
+DonghuaApp.removeHistory(id);
+
+renderHistory();
+
+}
+
+
+// CLEAR HISTORY
+
+document.getElementById("clear-history")
+.addEventListener("click", () => {
+
+if (confirm("Clear all watch history?")) {
+
+DonghuaApp.clearHistory();
+
+renderHistory();
+
+}
+
+});
+
+
+// OPEN ANIME
+
+function openAnime(id) {
+
+window.location.href = "anime.html?id=" + id;
+
+}
+
+
+// CONTINUE WATCHING
+
+function continueWatching(id, episode) {
+
+window.location.href =
+"watch.html?id=" + id + "&episode=" + episode;
+
+}
+
+
+// SAFE TEXT
+
+function escapeHTML(text) {
+
+const element = document.createElement("div");
+
+element.textContent = text || "";
+
+return element.innerHTML;
+
+}
+
+
+// LIVE UPDATE
+
+DonghuaApp.on("listUpdated", renderMyList);
+
+DonghuaApp.on("historyUpdated", renderHistory);
+
+
+// INITIAL LOAD
+
+renderMyList();
+
+renderHistory();
+
 </script>
 
 </body>
 </html>
-
