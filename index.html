@@ -1,1 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>chinesXdonghua | Chinese Animation</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: #08090d;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background: rgba(8,9,13,0.92);
+    backdrop-filter: blur(15px);
+}
+
+.logo {
+    color: #ff6b35;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.hero {
+    min-height: 440px;
+    background:
+    linear-gradient(90deg,#08090d 5%,rgba(8,9,13,.75),transparent),
+    linear-gradient(0deg,#08090d,transparent),
+    url('https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600')
+    center/cover;
+}
+
+.card {
+    min-width: 145px;
+    max-width: 180px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.card:hover {
+    transform: translateY(-7px);
+}
+
+.card img {
+    width: 100%;
+    height: 215px;
+    object-fit: cover;
+    border-radius: 10px;
+    background: #171923;
+}
+
+::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff6b35;
+    border-radius: 10px;
+}
+
+.section-title {
+    font-size: 21px;
+    font-weight: 800;
+    margin-bottom: 17px;
+}
+
+.badge {
+    background: #ff6b35;
+    color: white;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+
+<header class="sticky top-0 z-50 border-b border-white/10">
+
+<div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+
+<a href="index.html" class="logo text-xl">
+chinesX<span class="text-white">donghua</span>
+</a>
+
+<nav class="hidden md:flex gap-7 text-sm text-gray-300">
+
+<a href="index.html" class="text-orange-400">Home</a>
+<a href="#trending">Trending</a>
+<a href="#ongoing">Ongoing</a>
+<a href="#completed">Completed</a>
+<a href="#latest">Latest</a>
+
+</nav>
+
+<button onclick="searchAnime()" class="text-xl">
+⌕
+</button>
+
+</div>
+</header>
+
+
+<!-- HERO -->
+
+<section class="hero flex items-center">
+
+<div class="max-w-7xl mx-auto px-6 w-full">
+
+<div class="max-w-xl">
+
+<span class="badge">CHINESE ANIMATION</span>
+
+<h1 class="text-4xl md:text-6xl font-black mt-5">
+Explore The World Of
+<span class="text-orange-500">Donghua</span>
+</h1>
+
+<p class="text-gray-300 mt-5 leading-7">
+Discover the latest Chinese animation, cultivation adventures,
+fantasy worlds and legendary battles.
+</p>
+
+<div class="flex gap-3 mt-7">
+
+<a href="#trending"
+class="bg-orange-500 px-6 py-3 rounded-lg font-bold">
+Explore Now
+</a>
+
+<a href="#latest"
+class="bg-white/10 px-6 py-3 rounded-lg">
+Latest Episodes
+</a>
+
+</div>
+
+</div>
+</div>
+</section>
+
+
+<!-- TRENDING -->
+
+<main class="max-w-7xl mx-auto px-4 py-10">
+
+<section id="trending">
+
+<h2 class="section-title">
+🔥 Trending Donghua
+</h2>
+
+<div id="trending-list"
+class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading Donghua...</p>
+
+</div>
+
+</section>
+
+
+<!-- ONGOING -->
+
+<section id="ongoing" class="mt-12">
+
+<h2 class="section-title">
+📺 Ongoing Donghua
+</h2>
+
+<div id="ongoing-list"
+class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading...</p>
+
+</div>
+
+</section>
+
+
+<!-- COMPLETED -->
+
+<section id="completed" class="mt-12">
+
+<h2 class="section-title">
+🏆 Completed Donghua
+</h2>
+
+<div id="completed-list"
+class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading...</p>
+
+</div>
+
+</section>
+
+
+<!-- LATEST -->
+
+<section id="latest" class="mt-12">
+
+<h2 class="section-title">
+🆕 Latest Donghua
+</h2>
+
+<div id="latest-list"
+class="flex gap-4 overflow-x-auto pb-5">
+
+<p class="text-gray-400">Loading...</p>
+
+</div>
+
+</section>
+
+</main>
+
+
+<!-- FOOTER -->
+
+<footer class="border-t border-white/10 mt-12 py-8 text-center">
+
+<h2 class="logo text-xl">chinesXdonghua</h2>
+
+<p class="text-gray-500 text-sm mt-3">
+Your Ultimate Chinese Animation Destination.
+</p>
+
+<p class="text-gray-600 text-xs mt-5">
+© 2026 chinesXdonghua
+</p>
+
+</footer>
+
+
+<script>
+
+const API = "https://graphql.anilist.co";
+
+const QUERY = `
+query ($sort: [MediaSort], $status: MediaStatus) {
+
+Page(page: 1, perPage: 15) {
+
+media(
+type: ANIME
+countryOfOrigin: "CN"
+sort: $sort
+status: $status
+isAdult: false
+) {
+
+id
+title {
+romaji
+english
+}
+coverImage {
+extraLarge
+}
+episodes
+status
+averageScore
+seasonYear
+format
+
+}
+
+}
+
+}
+`;
+
+
+async function getDonghua(sort, status = null) {
+
+try {
+
+const response = await fetch(API, {
+
+method: "POST",
+
+headers: {
+"Content-Type": "application/json",
+"Accept": "application/json"
+},
+
+body: JSON.stringify({
+
+query: QUERY,
+
+variables: {
+sort: [sort],
+status: status
+}
+
+})
+
+});
+
+const data = await response.json();
+
+if (!response.ok || !data.data) {
+throw new Error("API unavailable");
+}
+
+return data.data.Page.media;
+
+} catch (error) {
+
+console.error(error);
+
+return [];
+
+}
+
+}
+
+
+function createCards(anime) {
+
+if (!anime.length) {
+return `<p class="text-gray-500">No Donghua available.</p>`;
+}
+
+return anime.map(item => {
+
+const title =
+item.title.english ||
+item.title.romaji ||
+"Unknown Donghua";
+
+return `
+
+<div class="card" onclick="openAnime(${item.id})">
+
+<img
+src="${item.coverImage.extraLarge}"
+alt="${title}"
+loading="lazy"
+>
+
+<h3 class="text-sm font-bold mt-2 line-clamp-2">
+${title}
+</h3>
+
+<p class="text-xs text-gray-400 mt-1">
+
+${item.seasonYear || "Unknown"}
+
+·
+
+${item.episodes || "?"} Episodes
+
+</p>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+
+async function loadHomepage() {
+
+const trending = await getDonghua("TRENDING_DESC");
+
+document.getElementById("trending-list").innerHTML =
+createCards(trending);
+
+
+const ongoing = await getDonghua(
+"POPULARITY_DESC",
+"RELEASING"
+);
+
+document.getElementById("ongoing-list").innerHTML =
+createCards(ongoing);
+
+
+const completed = await getDonghua(
+"POPULARITY_DESC",
+"FINISHED"
+);
+
+document.getElementById("completed-list").innerHTML =
+createCards(completed);
+
+
+const latest = await getDonghua("START_DATE_DESC");
+
+document.getElementById("latest-list").innerHTML =
+createCards(latest);
+
+}
+
+
+function openAnime(id) {
+
+window.location.href = "anime.html?id=" + id;
+
+}
+
+
+function searchAnime() {
+
+const name = prompt("Enter Donghua name:");
+
+if (name) {
+
+window.location.href =
+"search.html?q=" + encodeURIComponent(name);
+
+}
+
+}
+
+
+loadHomepage();
+
+</script>
+
+</body>
+  </html>
