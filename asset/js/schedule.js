@@ -1,55 +1,152 @@
 /* =====================================
-   chinesXdonghua - Schedule System
-   Data Source: AniList GraphQL API
+   chinesXdonghua - Release Schedule
 ===================================== */
 
-const ScheduleAPI = "https://graphql.anilist.co";
+(() => {
+    "use strict";
 
-const ScheduleQuery = `
-query {
-    Page(page: 1, perPage: 50) {
-        media(
-            type: ANIME
-            countryOfOrigin: CN
-            status: RELEASING
-            sort: POPULARITY_DESC
-            isAdult: false
-        ) {
-            id
-            title {
-                english
-                romaji
-                native
+    const API_URL = "https://graphql.anilist.co";
+
+    const QUERY = `
+        query ($page: Int, $perPage: Int) {
+            Page(page: $page, perPage: $perPage) {
+                media(
+                    type: ANIME,
+                    countryOfOrigin: "CN",
+                    isAdult: false,
+                    status: RELEASING,
+                    sort: POPULARITY_DESC
+                ) {
+                    id
+
+                    title {
+                        english
+                        romaji
+                        native
+                    }
+
+                    coverImage {
+                        extraLarge
+                        large
+                    }
+
+                    episodes
+                    nextAiringEpisode {
+                        episode
+                        airingAt
+                        timeUntilAiring
+                    }
+                }
             }
-            coverImage {
-                large
-                extraLarge
-            }
-            episodes
-            status
-            nextAiringEpisode {
-                airingAt
-                timeUntilAiring
-                episode
-            }
-            averageScore
-            seasonYear
         }
+    `;
+
+    let todayReleases = [];
+    let upcomingReleases = [];
+
+    // ---------------------------------
+    // Time Helpers
+    // ---------------------------------
+
+    function getJapanDate() {
+        return new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Tokyo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).format(new Date());
     }
-}
-`;
 
+    function getDateInJapan(timestamp) {
+        return new Intl.DateTimeFormat("en-CA", {
+            timeZone: "Asia/Tokyo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).format(new Date(timestamp * 1000));
+    }
 
-/* =====================================
-   FETCH SCHEDULE
-===================================== */
+    function formatTime(timestamp, timezone) {
+        return new Intl.DateTimeFormat("en-IN", {
+            timeZone: timezone,
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        }).format(new Date(timestamp * 1000));
+    }
 
-async function fetchSchedule() {
+    function formatDate(timestamp) {
+        return new Intl.DateTimeFormat("en-IN", {
+            timeZone: "Asia/Tokyo",
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        }).format(new Date(timestamp * 1000));
+    }
 
-    try {
+    function getCountdown(timestamp) {
+        const difference = timestamp * 1000 - Date.now();
 
-        const response = await fetch(ScheduleAPI, {
+        if (difference <= 0) {
+            return "Released";
+        }
 
+        const days = Math.floor(difference / 86400000);
+
+        const hours = Math.floor(
+            (difference % 86400000) / 3600000
+        );
+
+        const minutes = Math.floor(
+            (difference % 3600000) / 60000
+        );
+
+        const seconds = Math.floor(
+            (difference % 60000) / 1000
+        );
+
+        if (days > 0) {
+            return `${days}d ${hours}h ${minutes}m`;
+        }
+
+        return `${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    // ---------------------------------
+    // Title and Image
+    // ---------------------------------
+
+    function getTitle(anime) {
+        return anime.title?.english ||
+               anime.title?.romaji ||
+               anime.title?.native ||
+               "Unknown Donghua";
+    }
+
+    function getImage(anime) {
+        return anime.coverImage?.extraLarge ||
+               anime.coverImage?.large ||
+               "";
+    }
+
+    function escapeHTML(value) {
+        return window.DonghuaApp?.escapeHTML
+            ? window.DonghuaApp.escapeHTML(value)
+            : String(value ?? "").replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[char]);
+    }
+
+    // ---------------------------------
+    // API
+    // ---------------------------------
+
+    async function fetchSchedule() {
+        const response = await fetch(API_URL, {
             method: "POST",
 
             headers: {
@@ -58,489 +155,363 @@ async function fetchSchedule() {
             },
 
             body: JSON.stringify({
-                query: ScheduleQuery
-            })
+                query: QUERY,
 
+                variables: {
+                    page: 1,
+                    perPage: 50
+                }
+            })
         });
 
         if (!response.ok) {
-            throw new Error("API request failed");
+            throw new Error("Schedule API request failed.");
         }
 
         const result = await response.json();
 
-        return result.data.Page.media || [];
+        if (result.errors) {
+            throw new Error("Unable to load release schedule.");
+        }
 
-    } catch (error) {
-
-        console.error("Schedule Error:", error);
-
-        return [];
-
+        return result.data?.Page?.media || [];
     }
 
-}
+    // ---------------------------------
+    // Separate Releases
+    // ---------------------------------
 
+    function organizeReleases(animeList) {
+        const japanToday = getJapanDate();
 
-/* =====================================
-   HELPER FUNCTIONS
-===================================== */
+        todayReleases = [];
+        upcomingReleases = [];
 
-function scheduleTitle(anime) {
+        animeList.forEach(anime => {
+            const airing = anime.nextAiringEpisode;
 
-    return anime.title.english ||
-           anime.title.romaji ||
-           anime.title.native ||
-           "Unknown Donghua";
+            if (!airing?.airingAt) return;
 
-}
+            const releaseDate = getDateInJapan(airing.airingAt);
 
+            if (releaseDate === japanToday) {
+                todayReleases.push(anime);
+            } else if (airing.airingAt * 1000 > Date.now()) {
+                upcomingReleases.push(anime);
+            }
+        });
 
-function scheduleDate(timestamp) {
+        todayReleases.sort((a, b) =>
+            a.nextAiringEpisode.airingAt -
+            b.nextAiringEpisode.airingAt
+        );
 
-    return new Date(timestamp * 1000);
-
-}
-
-
-function formatScheduleDate(timestamp) {
-
-    return scheduleDate(timestamp).toLocaleDateString("en-IN", {
-
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "Asia/Tokyo"
-
-    });
-
-}
-
-
-function formatScheduleTime(timestamp, timezone) {
-
-    return scheduleDate(timestamp).toLocaleTimeString("en-GB", {
-
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: timezone
-
-    });
-
-}
-
-
-function scheduleCountdown(timestamp) {
-
-    const difference = timestamp - Math.floor(Date.now() / 1000);
-
-    if (difference <= 0) {
-        return "Release time reached";
+        upcomingReleases.sort((a, b) =>
+            a.nextAiringEpisode.airingAt -
+            b.nextAiringEpisode.airingAt
+        );
     }
 
-    const days = Math.floor(difference / 86400);
-    const hours = Math.floor((difference % 86400) / 3600);
-    const minutes = Math.floor((difference % 3600) / 60);
-    const seconds = difference % 60;
+    // ---------------------------------
+    // Release Card
+    // ---------------------------------
 
-    if (days > 0) {
-        return `${days}d ${hours}h ${minutes}m`;
-    }
+    function createReleaseCard(anime) {
+        const airing = anime.nextAiringEpisode;
 
-    return `${hours}h ${minutes}m ${seconds}s`;
+        const title = getTitle(anime);
+        const image = getImage(anime);
 
-}
+        const timestamp = airing.airingAt;
 
+        const japanTime = formatTime(timestamp, "Asia/Tokyo");
+        const indiaTime = formatTime(timestamp, "Asia/Kolkata");
 
-function scheduleEscape(text) {
+        const date = formatDate(timestamp);
 
-    return String(text).replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;"
-    })[char]);
+        const countdown = getCountdown(timestamp);
 
-}
+        return `
+            <article class="anime-card schedule-card">
 
-
-/* =====================================
-   CREATE ANIME CARD
-===================================== */
-
-function createScheduleCard(anime) {
-
-    const title = scheduleEscape(scheduleTitle(anime));
-
-    const image = anime.coverImage.extraLarge ||
-                  anime.coverImage.large;
-
-    const airing = anime.nextAiringEpisode;
-
-    const score = anime.averageScore
-        ? (anime.averageScore / 10).toFixed(1)
-        : "N/A";
-
-    const date = formatScheduleDate(airing.airingAt);
-
-    const japanTime = formatScheduleTime(
-        airing.airingAt,
-        "Asia/Tokyo"
-    );
-
-    const indiaTime = formatScheduleTime(
-        airing.airingAt,
-        "Asia/Kolkata"
-    );
-
-    const countdown = scheduleCountdown(airing.airingAt);
-
-    return `
-        <article class="schedule-card rounded-xl overflow-hidden">
-
-            <a href="anime.html?id=${anime.id}"
-                class="block">
-
-                <div class="relative overflow-hidden">
+                <div class="anime-poster">
 
                     <img
-                        src="${image}"
-                        alt="${title}"
-                        class="poster w-full"
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(title)}"
                         loading="lazy"
+                        onerror="this.style.opacity='0'"
                     >
 
-                    <span class="absolute top-3 left-3 bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">
+                    <span class="anime-badge">
                         EP ${airing.episode}
                     </span>
 
                 </div>
 
-                <div class="p-4">
+                <div class="anime-card-info">
 
-                    <h3 class="font-bold text-sm leading-5 line-clamp-2">
-                        ${title}
+                    <h3>
+                        ${escapeHTML(title)}
                     </h3>
 
-                    <p class="text-xs text-gray-500 mt-2">
-                        ⭐ ${score} / 10
+                    <p class="release-date">
+                        ${escapeHTML(date)}
                     </p>
 
-                    <div class="mt-4 space-y-2">
+                    <p>
+                        🇯🇵 ${escapeHTML(japanTime)} JST
+                    </p>
 
-                        <div class="flex justify-between text-xs">
-                            <span class="text-gray-400">Date</span>
-                            <span>${date}</span>
-                        </div>
+                    <p>
+                        🇮🇳 ${escapeHTML(indiaTime)} IST
+                    </p>
 
-                        <div class="flex justify-between text-xs">
-                            <span class="text-gray-400">🇯🇵 JST</span>
-                            <span>${japanTime}</span>
-                        </div>
-
-                        <div class="flex justify-between text-xs">
-                            <span class="text-gray-400">🇮🇳 IST</span>
-                            <span>${indiaTime}</span>
-                        </div>
-
+                    <div
+                        class="release-countdown"
+                        data-airing="${timestamp}"
+                    >
+                        ${escapeHTML(countdown)}
                     </div>
 
-                    <div class="mt-4 bg-brand/10 text-brand text-xs font-bold text-center rounded-lg p-3"
-                        data-countdown="${airing.airingAt}">
-
-                        ${countdown}
-
-                    </div>
+                    <button
+                        class="btn btn-secondary schedule-details"
+                        data-id="${anime.id}"
+                    >
+                        View Details
+                    </button>
 
                 </div>
 
-            </a>
-
-        </article>
-    `;
-
-}
-
-
-/* =====================================
-   CREATE UPCOMING CARD
-===================================== */
-
-function createUpcomingCard(anime) {
-
-    const title = scheduleEscape(scheduleTitle(anime));
-
-    const airing = anime.nextAiringEpisode;
-
-    const image = anime.coverImage.extraLarge ||
-                  anime.coverImage.large;
-
-    const date = formatScheduleDate(airing.airingAt);
-
-    const japanTime = formatScheduleTime(
-        airing.airingAt,
-        "Asia/Tokyo"
-    );
-
-    const indiaTime = formatScheduleTime(
-        airing.airingAt,
-        "Asia/Kolkata"
-    );
-
-    return `
-        <a href="anime.html?id=${anime.id}"
-            class="schedule-card rounded-xl p-4 flex gap-4">
-
-            <img
-                src="${image}"
-                alt="${title}"
-                class="w-24 h-32 object-cover rounded-lg"
-                loading="lazy"
-            >
-
-            <div class="flex-1 min-w-0">
-
-                <h3 class="font-bold leading-5 line-clamp-2">
-                    ${title}
-                </h3>
-
-                <p class="text-brand text-sm font-bold mt-3">
-                    Episode ${airing.episode}
-                </p>
-
-                <p class="text-gray-400 text-xs mt-2">
-                    ${date}
-                </p>
-
-                <p class="text-gray-300 text-xs mt-2">
-                    🇯🇵 ${japanTime} JST
-                </p>
-
-                <p class="text-gray-300 text-xs mt-1">
-                    🇮🇳 ${indiaTime} IST
-                </p>
-
-                <p class="text-brand text-xs mt-3 font-bold"
-                    data-countdown="${airing.airingAt}">
-
-                    ${scheduleCountdown(airing.airingAt)}
-
-                </p>
-
-            </div>
-
-        </a>
-    `;
-
-}
-
-
-/* =====================================
-   RENDER TODAY RELEASES
-===================================== */
-
-function renderTodayReleases(animeList) {
-
-    const container = document.getElementById("today-releases");
-
-    if (!container) return;
-
-    const today = new Date().toLocaleDateString("en-CA", {
-        timeZone: "Asia/Tokyo"
-    });
-
-    const todayAnime = animeList.filter(anime => {
-
-        if (!anime.nextAiringEpisode) return false;
-
-        const releaseDate = new Date(
-            anime.nextAiringEpisode.airingAt * 1000
-        ).toLocaleDateString("en-CA", {
-            timeZone: "Asia/Tokyo"
-        });
-
-        return releaseDate === today;
-
-    });
-
-    if (!todayAnime.length) {
-
-        container.innerHTML = `
-            <div class="col-span-full text-center py-12">
-
-                <p class="text-4xl mb-3">📅</p>
-
-                <h3 class="font-bold text-lg">
-                    No Releases Found Today
-                </h3>
-
-                <p class="text-gray-500 text-sm mt-2">
-                    Check the upcoming episodes below.
-                </p>
-
-            </div>
+            </article>
         `;
-
-        return;
-
     }
 
-    container.innerHTML = todayAnime
-        .map(createScheduleCard)
-        .join("");
+    // ---------------------------------
+    // Render Schedule
+    // ---------------------------------
 
-}
+    function renderReleases(containerId, animeList) {
+        const container = document.getElementById(containerId);
 
+        if (!container) return;
 
-/* =====================================
-   RENDER UPCOMING RELEASES
-===================================== */
+        if (!animeList.length) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Releases Found</h3>
+                    <p>No scheduled episodes were found for this period.</p>
+                </div>
+            `;
 
-function renderUpcomingReleases(animeList) {
+            return;
+        }
 
-    const container = document.getElementById("upcoming-releases");
+        container.innerHTML = animeList
+            .map(createReleaseCard)
+            .join("");
 
-    if (!container) return;
-
-    const now = Math.floor(Date.now() / 1000);
-
-    const upcoming = animeList
-
-        .filter(anime =>
-            anime.nextAiringEpisode &&
-            anime.nextAiringEpisode.airingAt > now
-        )
-
-        .sort((a, b) =>
-            a.nextAiringEpisode.airingAt -
-            b.nextAiringEpisode.airingAt
-        )
-
-        .slice(0, 30);
-
-    if (!upcoming.length) {
-
-        container.innerHTML = `
-            <div class="col-span-full text-center py-12 text-gray-500">
-                No upcoming episodes available.
-            </div>
-        `;
-
-        return;
-
+        container.querySelectorAll(".schedule-details")
+            .forEach(button => {
+                button.addEventListener("click", () => {
+                    window.location.href =
+                        `anime.html?id=${button.dataset.id}`;
+                });
+            });
     }
 
-    container.innerHTML = upcoming
-        .map(createUpcomingCard)
-        .join("");
+    // ---------------------------------
+    // Update Countdown
+    // ---------------------------------
 
-}
+    function updateCountdowns() {
+        document.querySelectorAll("[data-airing]")
+            .forEach(element => {
+                const timestamp = Number(element.dataset.airing);
 
+                element.textContent = getCountdown(timestamp);
+            });
+    }
 
-/* =====================================
-   LIVE COUNTDOWN
-===================================== */
+    // ---------------------------------
+    // Live Clocks
+    // ---------------------------------
 
-function updateScheduleCountdowns() {
+    function updateClocks() {
+        const now = new Date();
 
-    document.querySelectorAll("[data-countdown]").forEach(element => {
+        const japanClock = document.getElementById("japan-clock");
+        const indiaClock = document.getElementById("india-clock");
 
-        const timestamp = Number(element.dataset.countdown);
+        const japanDate = document.getElementById("japan-date");
+        const indiaDate = document.getElementById("india-date");
 
-        element.textContent = scheduleCountdown(timestamp);
+        if (japanClock) {
+            japanClock.textContent =
+                new Intl.DateTimeFormat("en-IN", {
+                    timeZone: "Asia/Tokyo",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                }).format(now);
+        }
 
-    });
+        if (indiaClock) {
+            indiaClock.textContent =
+                new Intl.DateTimeFormat("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true
+                }).format(now);
+        }
 
-}
+        if (japanDate) {
+            japanDate.textContent =
+                new Intl.DateTimeFormat("en-IN", {
+                    timeZone: "Asia/Tokyo",
+                    dateStyle: "full"
+                }).format(now);
+        }
 
+        if (indiaDate) {
+            indiaDate.textContent =
+                new Intl.DateTimeFormat("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    dateStyle: "full"
+                }).format(now);
+        }
+    }
 
-/* =====================================
-   MAIN SCHEDULE SYSTEM
-===================================== */
+    // ---------------------------------
+    // Load Schedule
+    // ---------------------------------
 
-async function loadSchedule() {
+    async function loadSchedule() {
+        const todayContainer =
+            document.getElementById("today-releases");
 
-    const todayContainer = document.getElementById("today-releases");
-
-    const upcomingContainer = document.getElementById("upcoming-releases");
-
-    try {
+        const upcomingContainer =
+            document.getElementById("upcoming-releases");
 
         if (todayContainer) {
             todayContainer.innerHTML = `
-                <div class="col-span-full text-center py-10 text-gray-400">
-                    Loading releases...
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading today's releases...</p>
                 </div>
             `;
         }
 
         if (upcomingContainer) {
             upcomingContainer.innerHTML = `
-                <div class="col-span-full text-center py-10 text-gray-400">
-                    Loading upcoming episodes...
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading upcoming episodes...</p>
                 </div>
             `;
         }
 
-        const animeList = await fetchSchedule();
+        try {
+            const animeList = await fetchSchedule();
 
-        renderTodayReleases(animeList);
+            organizeReleases(animeList);
 
-        renderUpcomingReleases(animeList);
+            renderReleases(
+                "today-releases",
+                todayReleases
+            );
 
-        updateScheduleCountdowns();
+            renderReleases(
+                "upcoming-releases",
+                upcomingReleases
+            );
 
-    } catch (error) {
+            updateCountdowns();
 
-        console.error(error);
+        } catch (error) {
+            console.error(error);
 
-        if (todayContainer) {
-            todayContainer.innerHTML =
-                `<p class="col-span-full text-center text-gray-500">Unable to load releases.</p>`;
+            [todayContainer, upcomingContainer].forEach(container => {
+                if (container) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>Unable to load schedule.</p>
+                            <button
+                                class="btn btn-primary"
+                                onclick="location.reload()"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            });
         }
-
-        if (upcomingContainer) {
-            upcomingContainer.innerHTML =
-                `<p class="col-span-full text-center text-gray-500">Unable to load upcoming episodes.</p>`;
-        }
-
     }
 
-}
+    // ---------------------------------
+    // Tabs
+    // ---------------------------------
 
+    function setupTabs() {
+        const tabs = document.querySelectorAll("[data-tab]");
 
-/* =====================================
-   GLOBAL OBJECT
-===================================== */
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const target = tab.dataset.tab;
 
-window.DonghuaSchedule = {
+                tabs.forEach(item => {
+                    item.classList.remove("active");
+                });
 
-    load: loadSchedule,
+                tab.classList.add("active");
 
-    refresh: loadSchedule,
-
-    updateCountdowns: updateScheduleCountdowns
-
-};
-
-
-/* =====================================
-   AUTO START
-===================================== */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    if (
-        document.getElementById("today-releases") ||
-        document.getElementById("upcoming-releases")
-    ) {
-
-        loadSchedule();
-
-        setInterval(updateScheduleCountdowns, 1000);
-
+                document.querySelectorAll(".schedule-section")
+                    .forEach(section => {
+                        section.style.display =
+                            section.id === target ? "block" : "none";
+                    });
+            });
+        });
     }
 
-});
+    // ---------------------------------
+    // Initialize
+    // ---------------------------------
+
+    function init() {
+        updateClocks();
+
+        setInterval(updateClocks, 1000);
+
+        setInterval(updateCountdowns, 1000);
+
+        setupTabs();
+
+        if (document.getElementById("today-releases")) {
+            loadSchedule();
+
+            // Refresh schedule every 5 minutes.
+            setInterval(loadSchedule, 300000);
+        }
+    }
+
+    // ---------------------------------
+    // Public API
+    // ---------------------------------
+
+    window.DonghuaSchedule = {
+        loadSchedule,
+        fetchSchedule,
+        getCountdown,
+        updateClocks,
+        todayReleases: () => todayReleases,
+        upcomingReleases: () => upcomingReleases
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+
+})();
