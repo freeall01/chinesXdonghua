@@ -1,8 +1,0 @@
-{
-  "AniList_ID": {
-    "1": [
-      { "name": "Server 1", "url": "YOUR_AUTHORIZED_M3U8_OR_MP4_URL",
-        "subtitles": [ { "lang": "en", "label": "English", "url": "YOUR_VTT_URL" } ] }
-    ]
-  }
-}
