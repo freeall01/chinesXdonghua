@@ -3,27 +3,513 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08090d">
+
 <title>Donghua Details | chinesXdonghua</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="asset/css/pages.css">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    background:#08090d;
+    color:white;
+    font-family:Arial,sans-serif;
+}
+
+.hero{
+    background:linear-gradient(0deg,#08090d 5%,rgba(8,9,13,.5),rgba(8,9,13,.2));
+}
+
+.poster{
+    width:190px;
+    border-radius:12px;
+    box-shadow:0 10px 35px #000;
+}
+
+.btn{
+    padding:12px 22px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.primary{
+    background:#ff6b35;
+}
+
+.secondary{
+    background:#242630;
+}
+
+.tag{
+    background:#20232e;
+    padding:7px 12px;
+    border-radius:20px;
+    font-size:12px;
+}
+
+.info{
+    color:#9ca3af;
+    font-size:13px;
+}
+
+.section-title{
+    font-size:22px;
+    font-weight:800;
+    margin-bottom:18px;
+}
+
+</style>
 </head>
 
 <body>
 
-<div id="navbar"></div>
+<header class="sticky top-0 z-50 bg-black/90 border-b border-white/10">
 
-<main id="anime-root">
-  <div class="banner"></div>
-  <div class="max-w-5xl mx-auto px-4 py-10 text-gray-400">Loading...</div>
+<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+
+<a href="index.html" class="text-xl font-black text-orange-500">
+chinesX<span class="text-white">donghua</span>
+</a>
+
+<a href="index.html" class="text-sm text-gray-300">
+← Home
+</a>
+
+</div>
+</header>
+
+
+<main id="content">
+
+<div class="text-center py-32 text-gray-400">
+Loading Donghua Details...
+</div>
+
 </main>
 
-<div id="footer"></div>
 
-<script src="asset/js/nav.js"></script>
-<script src="asset/js/anime.js"></script>
+<script>
+
+const API="https://graphql.anilist.co";
+
+const params=new URLSearchParams(location.search);
+
+const id=Number(params.get("id"));
+
+const query=`
+
+query ($id:Int) {
+
+Media(id:$id,type:ANIME) {
+
+id
+
+title {
+english
+romaji
+native
+}
+
+description(asHtml:false)
+
+coverImage {
+extraLarge
+large
+}
+
+bannerImage
+
+episodes
+
+status
+
+averageScore
+
+season
+
+seasonYear
+
+format
+
+genres
+
+countryOfOrigin
+
+startDate {
+year
+month
+day
+}
+
+endDate {
+year
+month
+day
+}
+
+duration
+
+studios(isMain:true) {
+nodes {
+name
+}
+}
+
+tags {
+name
+rank
+}
+}
+
+}
+`;
+
+
+function escapeHTML(value){
+
+return String(value ?? "").replace(/[&<>"']/g, char => ({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+})[char]);
+
+}
+
+
+function cleanDescription(value){
+
+const box=document.createElement("div");
+
+box.innerHTML=value || "";
+
+return box.textContent || "";
+
+}
+
+
+function saveToList(anime){
+
+let list=JSON.parse(
+localStorage.getItem("donghuaList") || "[]"
+);
+
+if(list.some(item=>item.id===anime.id)){
+
+alert("Already added to My List!");
+
+return;
+
+}
+
+list.push({
+
+id:anime.id,
+
+title:anime.title.english || anime.title.romaji,
+
+image:anime.coverImage.large
+
+});
+
+localStorage.setItem(
+"donghuaList",
+JSON.stringify(list)
+);
+
+alert("Added to My List!");
+
+}
+
+
+async function loadAnime(){
+
+const content=document.getElementById("content");
+
+if(!Number.isInteger(id) || id<=0){
+
+content.innerHTML=`
+<div class="text-center py-32">
+<h2 class="text-2xl font-bold">Invalid Donghua ID</h2>
+<a href="index.html" class="text-orange-400 mt-5 inline-block">
+Return Home
+</a>
+</div>`;
+
+return;
+
+}
+
+try{
+
+const response=await fetch(API,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"Accept":"application/json"
+},
+
+body:JSON.stringify({
+
+query,
+
+variables:{id}
+
+})
+
+});
+
+const result=await response.json();
+
+if(!response.ok || result.errors){
+
+throw new Error("Unable to load information");
+
+}
+
+const anime=result.data.Media;
+
+if(!anime || anime.countryOfOrigin!=="CN"){
+
+throw new Error("Chinese Donghua not found");
+
+}
+
+renderAnime(anime);
+
+}catch(error){
+
+content.innerHTML=`
+
+<div class="text-center py-32 px-5">
+
+<h2 class="text-2xl font-bold">
+Unable to Load Donghua
+</h2>
+
+<p class="text-gray-400 mt-3">
+${escapeHTML(error.message)}
+</p>
+
+<a href="index.html"
+class="inline-block mt-6 bg-orange-500 px-6 py-3 rounded-lg">
+Back Home
+</a>
+
+</div>`;
+
+}
+
+}
+
+
+function renderAnime(anime){
+
+const title=
+anime.title.english ||
+anime.title.romaji ||
+anime.title.native;
+
+const description=cleanDescription(anime.description);
+
+const image=anime.coverImage.extraLarge;
+
+const banner=anime.bannerImage || image;
+
+const genres=anime.genres || [];
+
+const studio=anime.studios.nodes
+.map(s=>s.name)
+.join(", ");
+
+const status=anime.status==="RELEASING"
+?"ONGOING"
+:anime.status==="FINISHED"
+?"COMPLETED"
+:anime.status;
+
+document.title=title+" | chinesXdonghua";
+
+
+document.getElementById("content").innerHTML=`
+
+<section class="relative">
+
+<div class="absolute inset-0 h-[450px] opacity-30">
+
+<img src="${escapeHTML(banner)}"
+class="w-full h-full object-cover">
+
+</div>
+
+<div class="hero relative pt-16 pb-12">
+
+<div class="max-w-6xl mx-auto px-5">
+
+<div class="flex flex-col md:flex-row gap-8 items-start">
+
+<img src="${escapeHTML(image)}"
+class="poster mx-auto md:mx-0"
+alt="${escapeHTML(title)}">
+
+<div class="flex-1">
+
+<span class="bg-orange-500 px-3 py-1 rounded text-xs font-bold">
+CHINESE DONGHUA
+</span>
+
+<h1 class="text-3xl md:text-5xl font-black mt-5">
+${escapeHTML(title)}
+</h1>
+
+<p class="text-gray-400 mt-3">
+${escapeHTML(anime.title.native || "")}
+</p>
+
+<div class="flex flex-wrap gap-2 mt-5">
+
+<span class="tag">${escapeHTML(status)}</span>
+
+<span class="tag">
+${escapeHTML(anime.format || "ANIMATION")}
+</span>
+
+<span class="tag">
+${anime.seasonYear || "Unknown Year"}
+</span>
+
+<span class="tag">
+${anime.episodes || "Unknown"} Episodes
+</span>
+
+</div>
+
+<div class="flex gap-3 mt-7 flex-wrap">
+
+<button onclick="addAnime()"
+class="btn primary">
+
++ My List
+
+</button>
+
+<a href="#episodes"
+class="btn secondary">
+
+Episodes
+
+</a>
+
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-5 mt-8">
+
+<div>
+<p class="info">Rating</p>
+<p class="font-bold text-yellow-400 mt-1">
+${anime.averageScore ? anime.averageScore/10+"/10" : "N/A"}
+</p>
+</div>
+
+<div>
+<p class="info">Season</p>
+<p class="font-bold mt-1">
+${escapeHTML(anime.season || "Unknown")}
+</p>
+</div>
+
+<div>
+<p class="info">Studio</p>
+<p class="font-bold mt-1">
+${escapeHTML(studio || "Unknown")}
+</p>
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</section>
+
+
+<section class="max-w-6xl mx-auto px-5 py-10">
+
+<h2 class="section-title">Synopsis</h2>
+
+<p class="text-gray-300 leading-8">
+${escapeHTML(description || "No description available.")}
+</p>
+
+</section>
+
+
+<section class="max-w-6xl mx-auto px-5 py-8">
+
+<h2 class="section-title">Genres</h2>
+
+<div class="flex flex-wrap gap-3">
+
+${genres.map(g=>`
+<span class="tag">${escapeHTML(g)}</span>
+`).join("")}
+
+</div>
+
+</section>
+
+
+<section id="episodes"
+class="max-w-6xl mx-auto px-5 py-10">
+
+<h2 class="section-title">Episodes</h2>
+
+<div class="bg-[#151720] rounded-xl p-6">
+
+<p class="text-orange-400 font-bold">
+${escapeHTML(status)}
+</p>
+
+<p class="text-gray-400 text-sm mt-3">
+Total episodes listed: ${anime.episodes || "Unknown"}
+</p>
+
+<p class="text-gray-500 text-sm mt-4 leading-6">
+Episode streaming information will appear here
+when an authorized video provider is connected.
+</p>
+
+</div>
+
+</section>
+
+`;
+
+
+window.currentAnime=anime;
+
+}
+
+
+function addAnime(){
+
+if(window.currentAnime){
+
+saveToList(window.currentAnime);
+
+}
+
+}
+
+
+loadAnime();
+
+</script>
 
 </body>
 </html>
-
