@@ -1,157 +1,225 @@
-/* chinesXdonghua - shared styles for anime, search, schedule and my-list pages */
+/* =================================
+   chinesXdonghua - Page Styles
+================================= */
 
-* { box-sizing: border-box; }
+/* PAGE HEADER */
 
-body {
-  background: #08090d;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
+.page-header {
+    padding: 45px 0 25px;
 }
 
-header.site-header {
-  background: rgba(8, 9, 13, 0.92);
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
+.page-header h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 10px;
 }
 
-.logo {
-  color: #ff6b35;
-  font-weight: 900;
-  letter-spacing: -1px;
+.page-header p {
+    color: var(--muted);
+    font-size: 14px;
 }
 
-.nav-link { color: #c4c4cc; }
-.nav-link.active,
-.nav-link:hover { color: #ff8a4c; }
+/* ANIME DETAILS */
 
-.mobile-nav { scrollbar-width: none; }
-.mobile-nav::-webkit-scrollbar { display: none; }
-
-::-webkit-scrollbar { height: 5px; width: 5px; }
-::-webkit-scrollbar-thumb { background: #ff6b35; border-radius: 10px; }
-
-.badge {
-  background: #ff6b35;
-  color: #fff;
-  padding: 3px 7px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
+.anime-details {
+    position: relative;
+    padding: 35px 0;
 }
 
-.btn-primary {
-  background: #ff6b35;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.btn-primary:active { transform: scale(0.97); }
-
-.btn-ghost {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.btn-ghost:active { transform: scale(0.97); }
-
-/* Grid of anime cards */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
-  gap: 16px;
+.details-banner {
+    position: relative;
+    min-height: 320px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 18px;
+    overflow: hidden;
 }
 
-.card { cursor: pointer; transition: 0.25s; }
-.card:hover { transform: translateY(-5px); }
-.card img {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
-  border-radius: 10px;
-  background: #171923;
+.details-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        rgba(8,9,13,0.95),
+        rgba(8,9,13,0.45)
+    );
 }
 
-.skeleton {
-  aspect-ratio: 2 / 3;
-  border-radius: 10px;
-  background: linear-gradient(90deg, #14151c 25%, #1e202b 50%, #14151c 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite linear;
-}
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.details-content {
+    position: relative;
+    z-index: 2;
+    padding: 35px;
+    display: flex;
+    gap: 25px;
+    align-items: center;
 }
 
-.section-title {
-  font-size: 21px;
-  font-weight: 800;
-  margin-bottom: 17px;
+.details-poster {
+    width: 180px;
+    border-radius: 12px;
 }
 
-/* Anime details page */
-.banner {
-  height: 260px;
-  background-size: cover;
-  background-position: center;
-  background-color: #12131a;
-  position: relative;
-}
-.banner::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg, #08090d 5%, rgba(8, 9, 13, 0.35));
+.details-info {
+    max-width: 650px;
 }
 
-.chip {
-  background: rgba(255, 255, 255, 0.09);
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  color: #ddd;
-}
-.chip.orange {
-  background: rgba(255, 107, 53, 0.18);
-  color: #ff9a6b;
+.details-info h1 {
+    font-size: 30px;
+    margin-bottom: 12px;
 }
 
-.ep-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: 10px;
-}
-.ep-btn {
-  background: #171923;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 10px 0;
-  text-align: center;
-  font-weight: 700;
-  font-size: 14px;
-}
-.ep-btn:hover { background: #ff6b35; border-color: #ff6b35; }
-
-.retry-btn {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-left: 8px;
+.details-description {
+    color: #c1c2cb;
+    line-height: 1.7;
+    margin: 15px 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+.details-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.details-genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+/* SEARCH */
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin: 25px 0;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 15px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: white;
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--orange);
+}
+
+.search-results {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+}
+
+/* SCHEDULE */
+
+.schedule-date {
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+
+.schedule-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.schedule-card img {
+    width: 65px;
+    height: 85px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.schedule-info {
+    flex: 1;
+}
+
+.schedule-info h3 {
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.schedule-time {
+    color: var(--orange);
+    font-size: 13px;
+}
+
+.countdown {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+/* MY LIST */
+
+.list-tabs {
+    display: flex;
+    gap: 12px;
+    margin: 25px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.list-tab {
+    padding: 12px 15px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.list-tab.active {
+    color: var(--orange);
+    border-bottom: 2px solid var(--orange);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+}
+
+.empty-state h2 {
+    color: white;
+    margin-bottom: 10px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 700px) {
+    .details-content {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px;
+    }
+
+    .details-poster {
+        width: 130px;
+    }
+
+    .details-info h1 {
+        font-size: 23px;
+    }
+
+    .search-results {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .page-header h1 {
+        font-size: 26px;
+    }
 }
