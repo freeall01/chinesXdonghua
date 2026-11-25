@@ -1,1 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08090d">
+<title>My List | chinesXdonghua</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="asset/css/pages.css">
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+  <h1 class="section-title">My List</h1>
+  <p class="text-gray-500 text-xs mb-6">Saved on this device only.</p>
+
+  <div id="list" class="card-grid"></div>
+  <p id="empty" class="text-gray-400 hidden">
+    Your list is empty. Open a Donghua and tap "+ My List".
+  </p>
+
+</main>
+
+<div id="footer"></div>
+
+<script src="asset/js/nav.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var CX = window.CX;
+  var listEl = document.getElementById("list");
+  var emptyEl = document.getElementById("empty");
+
+  function render() {
+    var items = CX.getList();
+
+    emptyEl.classList.toggle("hidden", items.length > 0);
+
+    listEl.innerHTML = items.map(function (item) {
+      var title = CX.esc(item.title);
+      return (
+        '<div>' +
+        '<a href="anime.html?id=' + item.id + '" class="card block">' +
+        '<img src="' + CX.esc(item.cover) + '" alt="' + title + '" loading="lazy">' +
+        '<h3 class="text-sm font-bold mt-2 line-clamp-2">' + title + "</h3>" +
+        '<p class="text-xs text-gray-400 mt-1">' +
+        CX.esc(item.year || "TBA") + " · " + CX.esc(item.episodes || "?") + " Episodes</p>" +
+        "</a>" +
+        '<button data-remove="' + item.id + '" class="text-xs text-gray-500 hover:text-orange-400 mt-2">Remove</button>' +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  listEl.addEventListener("click", function (event) {
+    var id = parseInt(event.target.getAttribute("data-remove"), 10);
+    if (!id) return;
+
+    var item = CX.getList().find(function (entry) { return entry.id === id; });
+    if (item) CX.toggleList(item);
+    render();
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
 
