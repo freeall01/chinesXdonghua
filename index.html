@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color" content="#08090d">
+<meta name="description" content="Discover Chinese Donghua, cultivation adventures, fantasy worlds and latest Chinese animation.">
 
 <title>chinesXdonghua | Chinese Animation</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
+    margin: 0;
     background: #08090d;
     color: white;
     font-family: Arial, sans-serif;
@@ -30,6 +40,15 @@ header {
     letter-spacing: -1px;
 }
 
+.nav-link {
+    transition: .3s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #ff6b35;
+}
+
 .hero {
     min-height: 440px;
     background:
@@ -42,6 +61,7 @@ header {
 .card {
     min-width: 145px;
     max-width: 180px;
+    flex: 0 0 145px;
     cursor: pointer;
     transition: .3s;
 }
@@ -56,6 +76,13 @@ header {
     object-fit: cover;
     border-radius: 10px;
     background: #171923;
+}
+
+.card-title {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 ::-webkit-scrollbar {
@@ -77,18 +104,32 @@ header {
 .badge {
     background: #ff6b35;
     color: white;
-    padding: 3px 7px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 10px;
 }
+
+.mobile-menu {
+    display: none;
+}
+
+.mobile-menu.menu-open {
+    display: flex;
+}
+
+.navbar-scrolled {
+    box-shadow: 0 5px 25px rgba(0,0,0,.35);
+}
+
 </style>
+
 </head>
 
 <body>
 
 <!-- NAVBAR -->
 
-<header class="sticky top-0 z-50 border-b border-white/10">
+<header id="navbar" class="sticky top-0 z-50 border-b border-white/10">
 
 <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
 
@@ -98,19 +139,58 @@ chinesX<span class="text-white">donghua</span>
 
 <nav class="hidden md:flex gap-7 text-sm text-gray-300">
 
-<a href="index.html" class="text-orange-400">Home</a>
-<a href="#trending">Trending</a>
-<a href="#ongoing">Ongoing</a>
-<a href="#completed">Completed</a>
-<a href="#latest">Latest</a>
+<a href="index.html" class="nav-link active">Home</a>
+
+<a href="#trending" class="nav-link">Trending</a>
+
+<a href="#ongoing" class="nav-link">Ongoing</a>
+
+<a href="#completed" class="nav-link">Completed</a>
+
+<a href="#latest" class="nav-link">Latest</a>
+
+<a href="schedule.html" class="nav-link">Schedule</a>
 
 </nav>
 
-<button onclick="searchAnime()" class="text-xl">
+<div class="flex items-center gap-4">
+
+<a href="search.html" class="text-xl" aria-label="Search">
 ⌕
+</a>
+
+<button id="menu-toggle"
+class="md:hidden text-2xl"
+aria-label="Open menu"
+aria-expanded="false">
+☰
 </button>
 
 </div>
+
+</div>
+
+<!-- MOBILE MENU -->
+
+<nav id="mobile-menu"
+class="mobile-menu flex-col gap-5 px-6 pb-5 text-sm text-gray-300 md:hidden">
+
+<a href="index.html">Home</a>
+
+<a href="#trending">Trending</a>
+
+<a href="#ongoing">Ongoing</a>
+
+<a href="#completed">Completed</a>
+
+<a href="#latest">Latest</a>
+
+<a href="schedule.html">Schedule</a>
+
+<a href="my-list.html">My List</a>
+
+</nav>
+
 </header>
 
 
@@ -122,51 +202,75 @@ chinesX<span class="text-white">donghua</span>
 
 <div class="max-w-xl">
 
-<span class="badge">CHINESE ANIMATION</span>
+<span class="badge">
+CHINESE ANIMATION
+</span>
 
 <h1 class="text-4xl md:text-6xl font-black mt-5">
+
 Explore The World Of
-<span class="text-orange-500">Donghua</span>
+
+<span class="text-orange-500">
+Donghua
+</span>
+
 </h1>
 
 <p class="text-gray-300 mt-5 leading-7">
+
 Discover the latest Chinese animation, cultivation adventures,
 fantasy worlds and legendary battles.
+
 </p>
 
-<div class="flex gap-3 mt-7">
+<div class="flex flex-wrap gap-3 mt-7">
 
 <a href="#trending"
-class="bg-orange-500 px-6 py-3 rounded-lg font-bold">
+class="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg font-bold transition">
+
 Explore Now
+
 </a>
 
 <a href="#latest"
-class="bg-white/10 px-6 py-3 rounded-lg">
+class="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-lg transition">
+
 Latest Episodes
+
 </a>
 
 </div>
 
 </div>
+
 </div>
+
 </section>
+
+
+<!-- MAIN CONTENT -->
+
+<main class="max-w-7xl mx-auto px-4 py-10">
 
 
 <!-- TRENDING -->
 
-<main class="max-w-7xl mx-auto px-4 py-10">
-
 <section id="trending">
+
+<div class="flex justify-between items-center">
 
 <h2 class="section-title">
 🔥 Trending Donghua
 </h2>
 
+</div>
+
 <div id="trending-list"
 class="flex gap-4 overflow-x-auto pb-5">
 
-<p class="text-gray-400">Loading Donghua...</p>
+<p class="text-gray-400">
+Loading Donghua...
+</p>
 
 </div>
 
@@ -184,7 +288,9 @@ class="flex gap-4 overflow-x-auto pb-5">
 <div id="ongoing-list"
 class="flex gap-4 overflow-x-auto pb-5">
 
-<p class="text-gray-400">Loading...</p>
+<p class="text-gray-400">
+Loading...
+</p>
 
 </div>
 
@@ -202,7 +308,9 @@ class="flex gap-4 overflow-x-auto pb-5">
 <div id="completed-list"
 class="flex gap-4 overflow-x-auto pb-5">
 
-<p class="text-gray-400">Loading...</p>
+<p class="text-gray-400">
+Loading...
+</p>
 
 </div>
 
@@ -220,7 +328,9 @@ class="flex gap-4 overflow-x-auto pb-5">
 <div id="latest-list"
 class="flex gap-4 overflow-x-auto pb-5">
 
-<p class="text-gray-400">Loading...</p>
+<p class="text-gray-400">
+Loading...
+</p>
 
 </div>
 
@@ -229,211 +339,58 @@ class="flex gap-4 overflow-x-auto pb-5">
 </main>
 
 
+<!-- BACK TO TOP -->
+
+<button id="back-to-top"
+class="hidden fixed bottom-6 right-5 bg-orange-500 hover:bg-orange-600 w-11 h-11 rounded-full text-xl z-40">
+
+↑
+
+</button>
+
+
 <!-- FOOTER -->
 
 <footer class="border-t border-white/10 mt-12 py-8 text-center">
 
-<h2 class="logo text-xl">chinesXdonghua</h2>
+<h2 class="logo text-xl">
+chinesXdonghua
+</h2>
 
 <p class="text-gray-500 text-sm mt-3">
+
 Your Ultimate Chinese Animation Destination.
+
 </p>
 
+<div class="flex justify-center gap-6 mt-5 text-sm text-gray-400">
+
+<a href="index.html">Home</a>
+
+<a href="search.html">Search</a>
+
+<a href="my-list.html">My List</a>
+
+<a href="schedule.html">Schedule</a>
+
+</div>
+
 <p class="text-gray-600 text-xs mt-5">
+
 © 2026 chinesXdonghua
+
 </p>
 
 </footer>
 
 
-<script>
+<!-- JAVASCRIPT -->
 
-const API = "https://graphql.anilist.co";
+<script src="asset/js/home.js"></script>
 
-const QUERY = `
-query ($sort: [MediaSort], $status: MediaStatus) {
+<script src="asset/js/nav.js"></script>
 
-Page(page: 1, perPage: 15) {
-
-media(
-type: ANIME
-countryOfOrigin: "CN"
-sort: $sort
-status: $status
-isAdult: false
-) {
-
-id
-title {
-romaji
-english
-}
-coverImage {
-extraLarge
-}
-episodes
-status
-averageScore
-seasonYear
-format
-
-}
-
-}
-
-}
-`;
-
-
-async function getDonghua(sort, status = null) {
-
-try {
-
-const response = await fetch(API, {
-
-method: "POST",
-
-headers: {
-"Content-Type": "application/json",
-"Accept": "application/json"
-},
-
-body: JSON.stringify({
-
-query: QUERY,
-
-variables: {
-sort: [sort],
-status: status
-}
-
-})
-
-});
-
-const data = await response.json();
-
-if (!response.ok || !data.data) {
-throw new Error("API unavailable");
-}
-
-return data.data.Page.media;
-
-} catch (error) {
-
-console.error(error);
-
-return [];
-
-}
-
-}
-
-
-function createCards(anime) {
-
-if (!anime.length) {
-return `<p class="text-gray-500">No Donghua available.</p>`;
-}
-
-return anime.map(item => {
-
-const title =
-item.title.english ||
-item.title.romaji ||
-"Unknown Donghua";
-
-return `
-
-<div class="card" onclick="openAnime(${item.id})">
-
-<img
-src="${item.coverImage.extraLarge}"
-alt="${title}"
-loading="lazy"
->
-
-<h3 class="text-sm font-bold mt-2 line-clamp-2">
-${title}
-</h3>
-
-<p class="text-xs text-gray-400 mt-1">
-
-${item.seasonYear || "Unknown"}
-
-·
-
-${item.episodes || "?"} Episodes
-
-</p>
-
-</div>
-
-`;
-
-}).join("");
-
-}
-
-
-async function loadHomepage() {
-
-const trending = await getDonghua("TRENDING_DESC");
-
-document.getElementById("trending-list").innerHTML =
-createCards(trending);
-
-
-const ongoing = await getDonghua(
-"POPULARITY_DESC",
-"RELEASING"
-);
-
-document.getElementById("ongoing-list").innerHTML =
-createCards(ongoing);
-
-
-const completed = await getDonghua(
-"POPULARITY_DESC",
-"FINISHED"
-);
-
-document.getElementById("completed-list").innerHTML =
-createCards(completed);
-
-
-const latest = await getDonghua("START_DATE_DESC");
-
-document.getElementById("latest-list").innerHTML =
-createCards(latest);
-
-}
-
-
-function openAnime(id) {
-
-window.location.href = "anime.html?id=" + id;
-
-}
-
-
-function searchAnime() {
-
-const name = prompt("Enter Donghua name:");
-
-if (name) {
-
-window.location.href =
-"search.html?q=" + encodeURIComponent(name);
-
-}
-
-}
-
-
-loadHomepage();
-
-</script>
+<script src="asset/js/app.js"></script>
 
 </body>
 </html>
