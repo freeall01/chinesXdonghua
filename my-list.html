@@ -2,444 +2,713 @@
 <html lang="en">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08090d">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>My List | chinesXdonghua</title>
+    <title>My List | chinesXdonghua</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta name="theme-color" content="#08090d">
 
-<style>
+    <link rel="stylesheet" href="asset/css/style.css">
+    <link rel="stylesheet" href="asset/css/pages.css">
 
-* {
-    box-sizing: border-box;
-}
+    <style>
+        .library-hero {
+            padding: 45px 0 25px;
+        }
 
-body {
-    margin: 0;
-    background: #08090d;
-    color: white;
-    font-family: Arial, sans-serif;
-}
+        .library-hero h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
 
-header {
-    background: rgba(8,9,13,.95);
-    backdrop-filter: blur(15px);
-}
+        .library-hero p {
+            color: var(--muted);
+        }
 
-.logo {
-    color: #ff6b35;
-    font-weight: 900;
-}
+        .library-tabs {
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
 
-.tab {
-    padding: 12px 20px;
-    border-bottom: 2px solid transparent;
-    color: #999;
-}
+        .library-tab {
+            padding: 14px 16px;
+            white-space: nowrap;
+            color: var(--muted);
+            background: transparent;
+            border: none;
+            font-size: 14px;
+        }
 
-.tab.active {
-    color: #ff6b35;
-    border-color: #ff6b35;
-}
+        .library-tab.active {
+            color: var(--orange);
+            border-bottom: 2px solid var(--orange);
+        }
 
-.card {
-    min-width: 145px;
-    max-width: 180px;
-    flex: 0 0 145px;
-    cursor: pointer;
-    transition: .3s;
-}
+        .library-section {
+            display: none;
+        }
 
-.card:hover {
-    transform: translateY(-5px);
-}
+        .library-section.active {
+            display: block;
+        }
 
-.card img {
-    width: 100%;
-    height: 215px;
-    object-fit: cover;
-    border-radius: 10px;
-    background: #171923;
-}
+        .library-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 18px;
+        }
 
-.empty {
-    padding: 50px 15px;
-    text-align: center;
-    color: #777;
-}
+        .library-card {
+            min-width: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
 
-</style>
+        .library-card img {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .library-card-content {
+            padding: 12px;
+        }
+
+        .library-card h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .library-card p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .card-actions button {
+            flex: 1;
+            padding: 8px 5px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            background: var(--surface-light);
+            color: white;
+            font-size: 11px;
+        }
+
+        .card-actions .remove-button {
+            color: #ff7777;
+        }
+
+        .library-empty {
+            text-align: center;
+            padding: 70px 15px;
+            background: var(--surface);
+            border-radius: 14px;
+            color: var(--muted);
+            grid-column: 1/-1;
+        }
+
+        .library-empty h2 {
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .clear-button {
+            background: transparent;
+            border: 1px solid #a94444;
+            color: #ff7777;
+            padding: 9px 13px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .continue-button {
+            display: block;
+            text-align: center;
+            background: var(--orange);
+            padding: 9px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        @media(max-width:900px) {
+            .library-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media(max-width:600px) {
+            .library-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .library-hero h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+
 </head>
 
 <body>
 
-<!-- NAVBAR -->
+    <!-- NAVBAR -->
 
-<header class="sticky top-0 z-50 border-b border-white/10">
+    <header class="navbar" id="navbar">
 
-<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="container navbar-inner">
 
-<a href="index.html" class="logo text-xl">
-chinesX<span class="text-white">donghua</span>
-</a>
+            <a href="index.html" class="logo">
+                chinesX<span style="color:white;">donghua</span>
+            </a>
 
-<nav class="flex gap-5 text-sm text-gray-300">
+            <nav class="nav-links">
 
-<a href="index.html">Home</a>
+                <a href="index.html" data-nav>Home</a>
 
-<a href="search.html">Search</a>
+                <a href="index.html#trending-list">
+                    Trending
+                </a>
 
-<a href="schedule.html">Schedule</a>
+                <a href="schedule.html" data-nav>
+                    Schedule
+                </a>
 
-</nav>
+                <a href="my-list.html" class="active" data-nav>
+                    My List
+                </a>
 
-</div>
+            </nav>
 
-</header>
+            <div class="nav-actions">
 
+                <button class="icon-button"
+                    onclick="location.href='search.html'">
+                    🔍
+                </button>
 
-<!-- PAGE HEADER -->
+                <button class="icon-button"
+                    id="menu-toggle">
+                    ☰
+                </button>
 
-<main class="max-w-7xl mx-auto px-4 py-10">
+            </div>
 
-<h1 class="text-3xl md:text-4xl font-black">
-My Collection
-</h1>
+        </div>
 
-<p class="text-gray-400 mt-2">
-Your personal Donghua library.
-</p>
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="search.html">Search</a>
+            <a href="schedule.html">Schedule</a>
+            <a href="my-list.html">My List</a>
+        </div>
 
+    </header>
 
-<!-- TABS -->
 
-<div class="flex gap-5 border-b border-white/10 mt-8">
+    <!-- MAIN -->
 
-<button id="tab-list" class="tab active">
-❤️ My List
-</button>
+    <main class="container">
 
-<button id="tab-history" class="tab">
-▶ Continue Watching
-</button>
+        <section class="library-hero">
 
-</div>
+            <span class="badge">
+                PERSONAL LIBRARY
+            </span>
 
+            <h1>My Donghua Library</h1>
 
-<!-- MY LIST -->
+            <p>
+                Your saved Donghua and watching progress in one place.
+            </p>
 
-<section id="my-list-section" class="mt-8">
+        </section>
 
-<div class="flex justify-between items-center mb-5">
 
-<h2 class="text-xl font-bold">
-Favourite Donghua
-</h2>
+        <!-- TABS -->
 
-<span id="list-count" class="text-gray-400 text-sm">
-0 Titles
-</span>
+        <div class="library-tabs">
 
-</div>
+            <button class="library-tab active"
+                data-tab="my-list-section">
 
-<div id="my-list"
-class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-5">
+                ❤️ My List
 
-</div>
+            </button>
 
-</section>
+            <button class="library-tab"
+                data-tab="continue-section">
 
+                ▶ Continue Watching
 
-<!-- HISTORY -->
+            </button>
 
-<section id="history-section" class="mt-8 hidden">
+            <button class="library-tab"
+                data-tab="history-section">
 
-<div class="flex justify-between items-center mb-5">
+                🕘 Watch History
 
-<h2 class="text-xl font-bold">
-Recently Watched
-</h2>
+            </button>
 
-<button id="clear-history"
-class="text-red-400 text-sm">
+        </div>
 
-Clear History
 
-</button>
+        <!-- MY LIST -->
 
-</div>
+        <section class="library-section active"
+            id="my-list-section">
 
-<div id="watch-history"
-class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-5">
+            <div class="section-heading">
 
-</div>
+                <h2>❤️ Saved Donghua</h2>
 
-</section>
+                <span id="list-count">
+                    0 Titles
+                </span>
 
-</main>
+            </div>
 
+            <div class="library-grid"
+                id="my-list">
 
-<!-- FOOTER -->
+                <div class="library-empty">
 
-<footer class="border-t border-white/10 mt-20 py-8 text-center">
+                    <h2>Your List Is Empty</h2>
 
-<h2 class="logo text-xl">
-chinesXdonghua
-</h2>
+                    <p>
+                        Add your favourite Donghua to your list.
+                    </p>
 
-<p class="text-gray-500 text-sm mt-3">
-Your Personal Donghua Library
-</p>
+                    <a href="index.html"
+                        class="btn btn-primary"
+                        style="display:inline-block;margin-top:18px;">
 
-</footer>
+                        Explore Donghua
 
+                    </a>
 
-<script src="asset/js/app.js"></script>
+                </div>
 
-<script>
+            </div>
 
-const myListSection =
-document.getElementById("my-list-section");
+        </section>
 
-const historySection =
-document.getElementById("history-section");
 
-const listTab =
-document.getElementById("tab-list");
+        <!-- CONTINUE WATCHING -->
 
-const historyTab =
-document.getElementById("tab-history");
+        <section class="library-section"
+            id="continue-section">
 
+            <div class="section-heading">
 
-// SWITCH TABS
+                <h2>▶ Continue Watching</h2>
 
-listTab.addEventListener("click", () => {
+            </div>
 
-myListSection.classList.remove("hidden");
+            <div class="library-grid"
+                id="continue-watching">
 
-historySection.classList.add("hidden");
+                <div class="library-empty">
 
-listTab.classList.add("active");
+                    <h2>Nothing To Continue</h2>
 
-historyTab.classList.remove("active");
+                    <p>
+                        Your watching progress will appear here.
+                    </p>
 
-});
+                </div>
 
-historyTab.addEventListener("click", () => {
+            </div>
 
-historySection.classList.remove("hidden");
+        </section>
 
-myListSection.classList.add("hidden");
 
-historyTab.classList.add("active");
+        <!-- WATCH HISTORY -->
 
-listTab.classList.remove("active");
+        <section class="library-section"
+            id="history-section">
 
-});
+            <div class="history-header">
 
+                <h2>🕘 Watch History</h2>
 
-// RENDER MY LIST
+                <button class="clear-button"
+                    id="clear-history">
 
-function renderMyList() {
+                    Clear History
 
-const container =
-document.getElementById("my-list");
+                </button>
 
-const list = DonghuaApp.getMyList();
+            </div>
 
-document.getElementById("list-count").textContent =
-list.length + " Titles";
+            <div class="library-grid"
+                id="watch-history">
 
-if (!list.length) {
+                <div class="library-empty">
 
-container.innerHTML = `
-<div class="empty col-span-full">
-<div class="text-5xl mb-4">❤️</div>
-<h3 class="text-xl font-bold">Your List Is Empty</h3>
-<p class="mt-2 text-sm">Add your favourite Donghua to see them here.</p>
-<a href="index.html" class="inline-block mt-5 bg-orange-500 px-5 py-3 rounded-lg">
-Explore Donghua
-</a>
-</div>
-`;
+                    <h2>No Watch History</h2>
 
-return;
+                    <p>
+                        Your recently watched Donghua will appear here.
+                    </p>
 
-}
+                </div>
 
-container.innerHTML = list.map(item => `
+            </div>
 
-<div class="card">
+        </section>
 
-<img
-src="${escapeHTML(item.image || "")}"
-alt="Donghua Poster"
-loading="lazy"
-onclick="openAnime(${Number(item.id)})"
->
+    </main>
 
-<h3 class="font-bold text-sm mt-2">
-${escapeHTML(item.title)}
-</h3>
 
-<button
-onclick="removeAnime(${Number(item.id)})"
-class="text-red-400 text-xs mt-2">
+    <!-- FOOTER -->
 
-✕ Remove
+    <footer class="footer">
 
-</button>
+        <h2 style="color:var(--orange);">
+            chinesXdonghua
+        </h2>
 
-</div>
+        <p style="margin-top:10px;">
+            Your Personal Donghua Library.
+        </p>
 
-`).join("");
+        <p style="margin-top:20px;font-size:12px;">
+            © 2026 chinesXdonghua
+        </p>
 
-}
+    </footer>
 
 
-// RENDER HISTORY
+    <!-- JAVASCRIPT -->
 
-function renderHistory() {
+    <script src="asset/js/app.js"></script>
 
-const container =
-document.getElementById("watch-history");
+    <script src="asset/js/nav.js"></script>
 
-const history = DonghuaApp.getHistory();
 
-if (!history.length) {
+    <script>
 
-container.innerHTML = `
-<div class="empty col-span-full">
-<div class="text-5xl mb-4">▶</div>
-<h3 class="text-xl font-bold">No Watch History</h3>
-<p class="mt-2 text-sm">Your recently watched Donghua will appear here.</p>
-</div>
-`;
+    document.addEventListener("DOMContentLoaded", function () {
 
-return;
+        const myListElement = document.getElementById("my-list");
+        const continueElement = document.getElementById("continue-watching");
+        const historyElement = document.getElementById("watch-history");
+        const listCount = document.getElementById("list-count");
 
-}
+        // ---------- IMAGE ----------
 
-container.innerHTML = history.map(item => `
+        function getImage(anime) {
+            return anime.image ||
+                "https://placehold.co/300x400/11131a/ffffff?text=Donghua";
+        }
 
-<div class="card">
+        // ---------- MY LIST ----------
 
-<img
-src="${escapeHTML(item.image || "")}"
-alt="Donghua Poster"
-loading="lazy"
-onclick="continueWatching(${Number(item.id)}, ${Number(item.episode || 1)})"
->
+        function renderMyList() {
 
-<h3 class="font-bold text-sm mt-2">
-${escapeHTML(item.title)}
-</h3>
+            const list = DonghuaApp.getMyList();
 
-<p class="text-xs text-gray-400 mt-1">
-Episode ${Number(item.episode || 1)}
-</p>
+            listCount.textContent = list.length + " Titles";
 
-<button
-onclick="removeHistory(${Number(item.id)})"
-class="text-red-400 text-xs mt-2">
+            if (!list.length) {
 
-✕ Remove
+                myListElement.innerHTML = `
+                    <div class="library-empty">
+                        <h2>Your List Is Empty</h2>
+                        <p>Add your favourite Donghua to your list.</p>
+                        <a href="index.html" class="btn btn-primary"
+                        style="display:inline-block;margin-top:18px;">
+                        Explore Donghua
+                        </a>
+                    </div>
+                `;
 
-</button>
+                return;
+            }
 
-</div>
+            myListElement.innerHTML = list.map(anime => `
 
-`).join("");
+                <article class="library-card">
 
-}
+                    <img
+                        src="${DonghuaApp.escapeHTML(getImage(anime))}"
+                        alt="${DonghuaApp.escapeHTML(anime.title)}"
+                        data-open="${anime.id}">
 
+                    <div class="library-card-content">
 
-// REMOVE ANIME
+                        <h3>
+                            ${DonghuaApp.escapeHTML(anime.title)}
+                        </h3>
 
-function removeAnime(id) {
+                        <p>
+                            Added ${DonghuaApp.formatDate(anime.addedAt)}
+                        </p>
 
-DonghuaApp.removeFromList(id);
+                        <div class="card-actions">
 
-renderMyList();
+                            <button data-open="${anime.id}">
+                                Details
+                            </button>
 
-}
+                            <button class="remove-button"
+                                data-remove="${anime.id}">
+                                Remove
+                            </button>
 
+                        </div>
 
-// REMOVE HISTORY
+                    </div>
 
-function removeHistory(id) {
+                </article>
 
-DonghuaApp.removeHistory(id);
+            `).join("");
 
-renderHistory();
+        }
 
-}
 
+        // ---------- WATCH HISTORY ----------
 
-// CLEAR HISTORY
+        function renderHistory() {
 
-document.getElementById("clear-history")
-.addEventListener("click", () => {
+            const history = DonghuaApp.getHistory();
 
-if (confirm("Clear all watch history?")) {
+            if (!history.length) {
 
-DonghuaApp.clearHistory();
+                historyElement.innerHTML = `
+                    <div class="library-empty">
+                        <h2>No Watch History</h2>
+                        <p>Your recently watched Donghua will appear here.</p>
+                    </div>
+                `;
 
-renderHistory();
+                continueElement.innerHTML = `
+                    <div class="library-empty">
+                        <h2>Nothing To Continue</h2>
+                        <p>Your watching progress will appear here.</p>
+                    </div>
+                `;
 
-}
+                return;
+            }
 
-});
+            historyElement.innerHTML = history.map(anime => `
 
+                <article class="library-card">
 
-// OPEN ANIME
+                    <img
+                        src="${DonghuaApp.escapeHTML(getImage(anime))}"
+                        alt="${DonghuaApp.escapeHTML(anime.title)}"
+                        data-open="${anime.id}">
 
-function openAnime(id) {
+                    <div class="library-card-content">
 
-window.location.href = "anime.html?id=" + id;
+                        <h3>
+                            ${DonghuaApp.escapeHTML(anime.title)}
+                        </h3>
 
-}
+                        <p>
+                            Episode ${anime.episode}
+                        </p>
 
+                        <p>
+                            ${DonghuaApp.formatDate(anime.updatedAt)}
+                        </p>
 
-// CONTINUE WATCHING
+                        <div class="card-actions">
 
-function continueWatching(id, episode) {
+                            <button data-watch="${anime.id}"
+                                data-episode="${anime.episode}">
+                                Continue
+                            </button>
 
-window.location.href =
-"watch.html?id=" + id + "&episode=" + episode;
+                            <button class="remove-button"
+                                data-history-remove="${anime.id}">
+                                Remove
+                            </button>
 
-}
+                        </div>
 
+                    </div>
 
-// SAFE TEXT
+                </article>
 
-function escapeHTML(text) {
+            `).join("");
 
-const element = document.createElement("div");
 
-element.textContent = text || "";
+            // Continue Watching
 
-return element.innerHTML;
+            continueElement.innerHTML = history.map(anime => `
 
-}
+                <article class="library-card">
 
+                    <img
+                        src="${DonghuaApp.escapeHTML(getImage(anime))}"
+                        alt="${DonghuaApp.escapeHTML(anime.title)}"
+                        data-watch="${anime.id}"
+                        data-episode="${anime.episode}">
 
-// LIVE UPDATE
+                    <div class="library-card-content">
 
-DonghuaApp.on("listUpdated", renderMyList);
+                        <h3>
+                            ${DonghuaApp.escapeHTML(anime.title)}
+                        </h3>
 
-DonghuaApp.on("historyUpdated", renderHistory);
+                        <p>
+                            Last watched: Episode ${anime.episode}
+                        </p>
 
+                        <a class="continue-button"
+                            href="watch.html?id=${encodeURIComponent(anime.id)}&episode=${encodeURIComponent(anime.episode)}">
 
-// INITIAL LOAD
+                            Continue Watching →
 
-renderMyList();
+                        </a>
 
-renderHistory();
+                    </div>
 
-</script>
+                </article>
+
+            `).join("");
+
+        }
+
+
+        // ---------- CLICK EVENTS ----------
+
+        document.addEventListener("click", function (event) {
+
+            const openButton = event.target.closest("[data-open]");
+
+            if (openButton) {
+
+                const id = openButton.dataset.open;
+
+                location.href = "anime.html?id=" + encodeURIComponent(id);
+
+                return;
+            }
+
+
+            const removeButton = event.target.closest("[data-remove]");
+
+            if (removeButton) {
+
+                DonghuaApp.removeFromList(removeButton.dataset.remove);
+
+                return;
+            }
+
+
+            const watchButton = event.target.closest("[data-watch]");
+
+            if (watchButton) {
+
+                const id = watchButton.dataset.watch;
+                const episode = watchButton.dataset.episode || 1;
+
+                location.href =
+                    "watch.html?id=" + encodeURIComponent(id) +
+                    "&episode=" + encodeURIComponent(episode);
+
+                return;
+            }
+
+
+            const historyRemove =
+                event.target.closest("[data-history-remove]");
+
+            if (historyRemove) {
+
+                DonghuaApp.removeHistory(
+                    historyRemove.dataset.historyRemove
+                );
+
+            }
+
+        });
+
+
+        // ---------- CLEAR HISTORY ----------
+
+        document.getElementById("clear-history")
+            .addEventListener("click", function () {
+
+                if (!confirm("Clear all watch history?")) return;
+
+                DonghuaApp.clearHistory();
+
+            });
+
+
+        // ---------- TAB SYSTEM ----------
+
+        const tabs = document.querySelectorAll(".library-tab");
+
+        const sections = document.querySelectorAll(".library-section");
+
+        tabs.forEach(tab => {
+
+            tab.addEventListener("click", function () {
+
+                tabs.forEach(item => item.classList.remove("active"));
+
+                sections.forEach(section =>
+                    section.classList.remove("active")
+                );
+
+                this.classList.add("active");
+
+                document.getElementById(this.dataset.tab)
+                    .classList.add("active");
+
+            });
+
+        });
+
+
+        // ---------- APP EVENTS ----------
+
+        DonghuaApp.on("listUpdated", renderMyList);
+
+        DonghuaApp.on("historyUpdated", renderHistory);
+
+
+        // ---------- INITIAL RENDER ----------
+
+        renderMyList();
+
+        renderHistory();
+
+    });
+
+    </script>
 
 </body>
 </html>
