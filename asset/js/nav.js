@@ -1,150 +1,308 @@
-/* =========================================
-   chinesXdonghua - Navigation System
-   File: asset/js/nav.js
-========================================= */
+/* =====================================
+   chinesXdonghua
+   Navigation System
+===================================== */
 
 (function () {
+
     "use strict";
 
-    const Nav = {
 
-        // Website pages
-        pages: {
-            home: "index.html",
-            anime: "anime.html",
-            search: "search.html",
-            schedule: "schedule.html",
-            myList: "my-list.html"
-        },
+    /* =====================================
+       ELEMENTS
+    ===================================== */
 
-        // Initialize navigation
-        init() {
-            this.setActiveLink();
-            this.setupMobileMenu();
-            this.setupSearch();
-            this.setupBackToTop();
-            this.setupNavbarScroll();
-        },
+    const navbar = document.getElementById("navbar");
 
-        // Highlight current page
-        setActiveLink() {
-            const currentPage =
-                window.location.pathname.split("/").pop() || "index.html";
+    const menuToggle = document.getElementById("menu-toggle");
 
-            document.querySelectorAll("[data-nav]").forEach(link => {
-                const target = link.getAttribute("data-nav");
+    const mobileMenu = document.getElementById("mobile-menu");
 
-                if (this.pages[target] === currentPage) {
-                    link.classList.add("active");
-                    link.setAttribute("aria-current", "page");
-                } else {
-                    link.classList.remove("active");
-                    link.removeAttribute("aria-current");
-                }
-            });
-        },
 
-        // Mobile navigation menu
-        setupMobileMenu() {
-            const menuButton = document.getElementById("menu-toggle");
-            const mobileMenu = document.getElementById("mobile-menu");
+    /* =====================================
+       MOBILE MENU
+    ===================================== */
 
-            if (!menuButton || !mobileMenu) return;
+    function toggleMobileMenu() {
 
-            menuButton.addEventListener("click", () => {
-                const isOpen =
-                    mobileMenu.classList.toggle("menu-open");
+        if (!mobileMenu) return;
 
-                menuButton.setAttribute(
-                    "aria-expanded",
-                    String(isOpen)
-                );
+        mobileMenu.classList.toggle("hidden");
 
-                menuButton.textContent = isOpen ? "✕" : "☰";
-            });
+        const isOpen = !mobileMenu.classList.contains("hidden");
 
-            // Close menu after clicking a link
-            mobileMenu.querySelectorAll("a").forEach(link => {
-                link.addEventListener("click", () => {
-                    mobileMenu.classList.remove("menu-open");
-                    menuButton.setAttribute("aria-expanded", "false");
-                    menuButton.textContent = "☰";
-                });
-            });
-        },
+        if (menuToggle) {
 
-        // Search navigation
-        setupSearch() {
-            const searchButtons =
-                document.querySelectorAll("[data-open-search]");
+            menuToggle.textContent = isOpen ? "✕" : "☰";
 
-            searchButtons.forEach(button => {
-                button.addEventListener("click", () => {
-                    window.location.href = this.pages.search;
-                });
-            });
+            menuToggle.setAttribute(
+                "aria-expanded",
+                String(isOpen)
+            );
 
-            const searchForms =
-                document.querySelectorAll("[data-search-form]");
-
-            searchForms.forEach(form => {
-                form.addEventListener("submit", event => {
-                    event.preventDefault();
-
-                    const input = form.querySelector("input");
-
-                    if (!input || !input.value.trim()) return;
-
-                    window.location.href =
-                        this.pages.search +
-                        "?q=" +
-                        encodeURIComponent(input.value.trim());
-                });
-            });
-        },
-
-        // Back to top button
-        setupBackToTop() {
-            const button =
-                document.getElementById("back-to-top");
-
-            if (!button) return;
-
-            window.addEventListener("scroll", () => {
-                button.style.display =
-                    window.scrollY > 400 ? "block" : "none";
-            });
-
-            button.addEventListener("click", () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-            });
-        },
-
-        // Navbar scroll effect
-        setupNavbarScroll() {
-            const navbar =
-                document.getElementById("navbar");
-
-            if (!navbar) return;
-
-            window.addEventListener("scroll", () => {
-                navbar.classList.toggle(
-                    "navbar-scrolled",
-                    window.scrollY > 30
-                );
-            });
         }
+
+    }
+
+
+    function closeMobileMenu() {
+
+        if (!mobileMenu) return;
+
+        mobileMenu.classList.add("hidden");
+
+        if (menuToggle) {
+
+            menuToggle.textContent = "☰";
+
+            menuToggle.setAttribute("aria-expanded", "false");
+
+        }
+
+    }
+
+
+    /* =====================================
+       NAVBAR SCROLL EFFECT
+    ===================================== */
+
+    function handleNavbarScroll() {
+
+        if (!navbar) return;
+
+        if (window.scrollY > 30) {
+
+            navbar.classList.add("shadow-xl");
+
+        } else {
+
+            navbar.classList.remove("shadow-xl");
+
+        }
+
+    }
+
+
+    /* =====================================
+       ACTIVE NAVIGATION
+    ===================================== */
+
+    function setActiveNavigation() {
+
+        const currentPage = location.pathname
+            .split("/")
+            .pop() || "index.html";
+
+        document.querySelectorAll("[data-nav]")
+            .forEach(link => {
+
+                const page = link.getAttribute("href");
+
+                const active = page === currentPage;
+
+                link.classList.toggle("text-brand", active);
+
+                if (active) {
+
+                    link.setAttribute("aria-current", "page");
+
+                } else {
+
+                    link.removeAttribute("aria-current");
+
+                }
+
+            });
+
+    }
+
+
+    /* =====================================
+       CLOSE MENU ON LINK CLICK
+    ===================================== */
+
+    function bindMenuLinks() {
+
+        if (!mobileMenu) return;
+
+        mobileMenu.querySelectorAll("a")
+            .forEach(link => {
+
+                link.addEventListener("click", closeMobileMenu);
+
+            });
+
+    }
+
+
+    /* =====================================
+       SEARCH NAVIGATION
+    ===================================== */
+
+    function bindSearchButtons() {
+
+        document.querySelectorAll("[data-open-search]")
+            .forEach(button => {
+
+                button.addEventListener("click", () => {
+
+                    location.href = "search.html";
+
+                });
+
+            });
+
+    }
+
+
+    /* =====================================
+       BACK TO TOP
+    ===================================== */
+
+    function createBackToTop() {
+
+        let button = document.getElementById("back-to-top");
+
+        if (!button) {
+
+            button = document.createElement("button");
+
+            button.id = "back-to-top";
+
+            button.type = "button";
+
+            button.textContent = "↑";
+
+            button.setAttribute("aria-label", "Back to top");
+
+            button.className = `
+                fixed bottom-6 right-5 z-40
+                w-12 h-12 rounded-full
+                bg-brand text-white text-2xl
+                shadow-xl
+                hidden
+            `;
+
+            document.body.appendChild(button);
+
+        }
+
+        button.addEventListener("click", () => {
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: "smooth"
+
+            });
+
+        });
+
+        window.addEventListener("scroll", () => {
+
+            button.classList.toggle(
+                "hidden",
+                window.scrollY < 400
+            );
+
+        });
+
+    }
+
+
+    /* =====================================
+       KEYBOARD SHORTCUTS
+    ===================================== */
+
+    function bindKeyboardShortcuts() {
+
+        document.addEventListener("keydown", event => {
+
+            if (
+                event.target.matches("input, textarea") ||
+                event.target.isContentEditable
+            ) {
+                return;
+            }
+
+            if (event.key === "Escape") {
+
+                closeMobileMenu();
+
+            }
+
+        });
+
+    }
+
+
+    /* =====================================
+       INITIALIZATION
+    ===================================== */
+
+    function init() {
+
+        if (menuToggle) {
+
+            menuToggle.addEventListener(
+                "click",
+                toggleMobileMenu
+            );
+
+        }
+
+        window.addEventListener(
+            "scroll",
+            handleNavbarScroll
+        );
+
+        bindMenuLinks();
+
+        bindSearchButtons();
+
+        setActiveNavigation();
+
+        createBackToTop();
+
+        bindKeyboardShortcuts();
+
+        handleNavbarScroll();
+
+        console.log("Donghua Navigation Initialized.");
+
+    }
+
+
+    /* =====================================
+       GLOBAL OBJECT
+    ===================================== */
+
+    window.DonghuaNav = {
+
+        init: init,
+
+        closeMenu: closeMobileMenu,
+
+        toggleMenu: toggleMobileMenu,
+
+        setActive: setActiveNavigation
+
     };
 
-    // Global access
-    window.DonghuaNav = Nav;
 
-    // Start navigation
-    document.addEventListener("DOMContentLoaded", () => {
-        Nav.init();
-    });
+    /* =====================================
+       START
+    ===================================== */
+
+    if (document.readyState === "loading") {
+
+        document.addEventListener("DOMContentLoaded", init);
+
+    } else {
+
+        init();
+
+    }
 
 })();
