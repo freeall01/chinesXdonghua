@@ -7,195 +7,311 @@
 
     <title>Donghua Schedule | chinesXdonghua</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description"
+        content="Explore Chinese Donghua release schedules and upcoming episodes.">
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: "#ff6b35",
-                        dark: "#080808",
-                        card: "#151515"
-                    }
-                }
-            }
-        };
-    </script>
+    <meta name="theme-color" content="#08090d">
+
+    <link rel="stylesheet" href="asset/css/style.css">
+    <link rel="stylesheet" href="asset/css/pages.css">
 
     <style>
-        * {
-            box-sizing: border-box;
+        .schedule-hero {
+            padding: 40px 0 25px;
         }
 
-        body {
-            background: #080808;
-            color: white;
-            font-family: Arial, sans-serif;
+        .schedule-hero h1 {
+            font-size: clamp(27px, 5vw, 38px);
+            margin-bottom: 12px;
         }
 
-        .glass {
-            background: rgba(20, 20, 20, 0.92);
-            backdrop-filter: blur(12px);
+        .schedule-hero p {
+            color: var(--muted);
+        }
+
+        .clock-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .clock-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 20px;
+        }
+
+        .clock-card span {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .clock-card h2 {
+            font-size: 27px;
+            margin-top: 10px;
+            color: var(--orange);
+        }
+
+        .clock-card p {
+            margin-top: 7px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .schedule-tabs {
+            display: flex;
+            gap: 12px;
+            margin: 30px 0 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-tab {
+            background: transparent;
+            color: var(--muted);
+            border: none;
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+
+        .schedule-tab.active {
+            color: var(--orange);
+            border-bottom: 2px solid var(--orange);
         }
 
         .schedule-card {
-            background: #151515;
-            border: 1px solid rgba(255,255,255,0.08);
-            transition: 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: .25s;
         }
 
         .schedule-card:hover {
-            border-color: #ff6b35;
-            transform: translateY(-3px);
+            border-color: var(--orange);
+            transform: translateY(-2px);
         }
 
-        .poster {
-            aspect-ratio: 3 / 4;
+        .schedule-card img {
+            width: 75px;
+            height: 95px;
             object-fit: cover;
+            border-radius: 8px;
         }
 
-        .time-box {
-            background: rgba(255,107,53,0.1);
-            border: 1px solid rgba(255,107,53,0.2);
+        .schedule-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .schedule-info h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .schedule-info p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .release-time {
+            color: var(--orange) !important;
+        }
+
+        .schedule-status {
+            font-size: 11px;
+            padding: 6px 9px;
+            background: rgba(255,107,53,.15);
+            color: var(--orange);
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .empty-schedule {
+            text-align: center;
+            padding: 55px 15px;
+            color: var(--muted);
+            background: var(--surface);
+            border-radius: 12px;
+        }
+
+        @media(max-width:600px) {
+            .clock-card h2 {
+                font-size: 21px;
+            }
+
+            .schedule-card {
+                gap: 10px;
+                padding: 10px;
+            }
+
+            .schedule-card img {
+                width: 65px;
+                height: 85px;
+            }
+
+            .schedule-status {
+                display: none;
+            }
         }
     </style>
+
 </head>
 
 <body>
 
     <!-- NAVBAR -->
-    <nav id="navbar"
-        class="sticky top-0 z-50 glass border-b border-white/10">
 
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <header class="navbar" id="navbar">
 
-            <a href="index.html"
-                class="text-2xl font-black">
-                chines<span class="text-brand">X</span>donghua
+        <div class="container navbar-inner">
+
+            <a href="index.html" class="logo">
+                chinesX<span style="color:white;">donghua</span>
             </a>
 
-            <div class="hidden md:flex gap-7 text-sm text-gray-300">
+            <nav class="nav-links">
 
-                <a href="index.html" class="hover:text-brand">Home</a>
+                <a href="index.html" data-nav>Home</a>
 
-                <a href="schedule.html" data-nav="schedule"
-                    class="text-brand">Schedule</a>
+                <a href="index.html#trending-list">
+                    Trending
+                </a>
 
-                <a href="search.html" class="hover:text-brand">Search</a>
+                <a href="schedule.html" class="active" data-nav>
+                    Schedule
+                </a>
 
-                <a href="my-list.html" class="hover:text-brand">My List</a>
+                <a href="my-list.html" data-nav>
+                    My List
+                </a>
+
+            </nav>
+
+            <div class="nav-actions">
+
+                <button class="icon-button"
+                    onclick="location.href='search.html'">
+                    🔍
+                </button>
+
+                <button class="icon-button"
+                    id="menu-toggle">
+                    ☰
+                </button>
 
             </div>
 
-            <button id="menu-toggle"
-                class="md:hidden text-2xl">
-                ☰
+        </div>
+
+        <div class="mobile-menu" id="mobile-menu">
+
+            <a href="index.html">Home</a>
+
+            <a href="search.html">Search</a>
+
+            <a href="schedule.html">Schedule</a>
+
+            <a href="my-list.html">My List</a>
+
+        </div>
+
+    </header>
+
+
+    <!-- MAIN -->
+
+    <main class="container">
+
+        <section class="schedule-hero">
+
+            <span class="badge">
+                RELEASE TRACKER
+            </span>
+
+            <h1>Donghua Release Schedule</h1>
+
+            <p>
+                Track ongoing Chinese animation and upcoming episodes.
+            </p>
+
+        </section>
+
+
+        <!-- CLOCKS -->
+
+        <section class="clock-grid">
+
+            <div class="clock-card">
+
+                <span>🇯🇵 Japan Standard Time</span>
+
+                <h2 id="japan-clock">
+                    --:--:--
+                </h2>
+
+                <p id="japan-date">
+                    Loading...
+                </p>
+
+            </div>
+
+            <div class="clock-card">
+
+                <span>🇮🇳 India Standard Time</span>
+
+                <h2 id="india-clock">
+                    --:--:--
+                </h2>
+
+                <p id="india-date">
+                    Loading...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- TABS -->
+
+        <div class="schedule-tabs">
+
+            <button class="schedule-tab active"
+                data-tab="today">
+                Today's Releases
+            </button>
+
+            <button class="schedule-tab"
+                data-tab="upcoming">
+                Upcoming
             </button>
 
         </div>
 
-        <div id="mobile-menu"
-            class="hidden md:hidden border-t border-white/10 p-4 space-y-4">
 
-            <a href="index.html" class="block">Home</a>
-            <a href="schedule.html" class="block text-brand">Schedule</a>
-            <a href="search.html" class="block">Search</a>
-            <a href="my-list.html" class="block">My List</a>
+        <!-- TODAY -->
 
-        </div>
+        <section id="today-section">
 
-    </nav>
+            <div class="section-heading">
 
-
-    <!-- HEADER -->
-    <main class="max-w-7xl mx-auto px-4 py-10">
-
-        <section class="text-center mb-10">
-
-            <p class="text-brand text-xs font-bold tracking-[4px] mb-3">
-                NEVER MISS AN EPISODE
-            </p>
-
-            <h1 class="text-3xl md:text-5xl font-black mb-4">
-                Donghua <span class="text-brand">Schedule</span>
-            </h1>
-
-            <p class="text-gray-400">
-                Track upcoming Chinese Animation episodes.
-            </p>
-
-        </section>
-
-
-        <!-- TIME INFORMATION -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-
-            <div class="time-box rounded-xl p-5">
-
-                <p class="text-gray-400 text-sm mb-2">
-                    🇯🇵 Japan Standard Time
-                </p>
-
-                <h2 id="japan-clock"
-                    class="text-3xl font-bold">
-                    --:--:--
-                </h2>
-
-                <p class="text-gray-500 text-xs mt-2">
-                    JST (UTC +9)
-                </p>
+                <h2>📅 Today's Episodes</h2>
 
             </div>
 
+            <div id="today-releases">
 
-            <div class="time-box rounded-xl p-5">
-
-                <p class="text-gray-400 text-sm mb-2">
-                    🇮🇳 India Standard Time
-                </p>
-
-                <h2 id="india-clock"
-                    class="text-3xl font-bold">
-                    --:--:--
-                </h2>
-
-                <p class="text-gray-500 text-xs mt-2">
-                    IST (UTC +5:30)
-                </p>
-
-            </div>
-
-        </section>
-
-
-        <!-- TODAY RELEASES -->
-        <section class="mb-14">
-
-            <div class="flex justify-between items-center mb-6">
-
-                <div>
-                    <p class="text-brand text-xs font-bold tracking-widest">
-                        TODAY
-                    </p>
-
-                    <h2 class="text-2xl font-black mt-1">
-                        Today's Releases
-                    </h2>
-                </div>
-
-                <span class="text-xs bg-white/10 px-3 py-2 rounded-full">
-                    🇯🇵 Japan Time
-                </span>
-
-            </div>
-
-
-            <div id="today-releases"
-                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-
-                <div class="col-span-full text-center py-12 text-gray-500">
-                    Loading today's releases...
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading Today's Releases...
                 </div>
 
             </div>
@@ -203,51 +319,25 @@
         </section>
 
 
-        <!-- UPCOMING RELEASES -->
-        <section class="mb-14">
+        <!-- UPCOMING -->
 
-            <div class="mb-6">
+        <section id="upcoming-section"
+            style="display:none;">
 
-                <p class="text-brand text-xs font-bold tracking-widest">
-                    COMING SOON
-                </p>
+            <div class="section-heading">
 
-                <h2 class="text-2xl font-black mt-1">
-                    Upcoming Episodes
-                </h2>
-
-                <p class="text-gray-500 text-sm mt-2">
-                    Check the next scheduled Donghua episodes.
-                </p>
+                <h2>⏳ Upcoming Episodes</h2>
 
             </div>
 
+            <div id="upcoming-releases">
 
-            <div id="upcoming-releases"
-                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-
-                <div class="col-span-full text-center py-12 text-gray-500">
-                    Loading upcoming episodes...
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading Upcoming Episodes...
                 </div>
 
             </div>
-
-        </section>
-
-
-        <!-- INFORMATION -->
-        <section class="bg-card border border-white/10 rounded-2xl p-6">
-
-            <h3 class="font-bold text-lg mb-3">
-                📌 Release Schedule Information
-            </h3>
-
-            <p class="text-gray-400 text-sm leading-7">
-                Release information is collected from available
-                anime metadata sources. Actual release times may
-                differ depending on the official broadcaster.
-                Not every Chinese Donghua has complete airing data.
-            </p>
 
         </section>
 
@@ -255,55 +345,114 @@
 
 
     <!-- FOOTER -->
-    <footer class="border-t border-white/10 mt-12 py-8">
 
-        <div class="text-center px-4">
+    <footer class="footer">
 
-            <h2 class="text-xl font-black mb-2">
-                chines<span class="text-brand">X</span>donghua
-            </h2>
+        <h2 style="color:var(--orange);">
+            chinesXdonghua
+        </h2>
 
-            <p class="text-gray-500 text-sm">
-                Your Donghua Release Tracker.
-            </p>
+        <p style="margin-top:10px;">
+            Never Miss Your Favourite Donghua.
+        </p>
 
-            <p class="text-gray-600 text-xs mt-4">
-                © 2026 chinesXdonghua
-            </p>
-
-        </div>
+        <p style="margin-top:20px;font-size:12px;">
+            © 2026 chinesXdonghua
+        </p>
 
     </footer>
 
 
-    <!-- SCRIPTS -->
+    <!-- JAVASCRIPT -->
+
     <script src="asset/js/app.js"></script>
+
     <script src="asset/js/nav.js"></script>
+
     <script src="asset/js/schedule.js"></script>
 
 
-    <!-- CLOCK -->
+    <!-- CLOCK + TABS -->
+
     <script>
+
         function updateClocks() {
 
             const now = new Date();
 
-            const japan = now.toLocaleTimeString("en-GB", {
+            const japanTime = new Intl.DateTimeFormat("en-GB", {
                 timeZone: "Asia/Tokyo",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
                 hour12: false
             });
 
-            const india = now.toLocaleTimeString("en-GB", {
+            const indiaTime = new Intl.DateTimeFormat("en-IN", {
                 timeZone: "Asia/Kolkata",
-                hour12: false
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
             });
 
-            document.getElementById("japan-clock").textContent = japan;
-            document.getElementById("india-clock").textContent = india;
+            const japanDate = new Intl.DateTimeFormat("en-GB", {
+                timeZone: "Asia/Tokyo",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+
+            const indiaDate = new Intl.DateTimeFormat("en-IN", {
+                timeZone: "Asia/Kolkata",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            });
+
+            document.getElementById("japan-clock").textContent =
+                japanTime.format(now);
+
+            document.getElementById("india-clock").textContent =
+                indiaTime.format(now);
+
+            document.getElementById("japan-date").textContent =
+                japanDate.format(now);
+
+            document.getElementById("india-date").textContent =
+                indiaDate.format(now);
+
         }
 
         updateClocks();
+
         setInterval(updateClocks, 1000);
+
+
+        // SCHEDULE TABS
+
+        const tabs = document.querySelectorAll(".schedule-tab");
+
+        tabs.forEach(tab => {
+
+            tab.addEventListener("click", function () {
+
+                tabs.forEach(item => item.classList.remove("active"));
+
+                this.classList.add("active");
+
+                const selected = this.dataset.tab;
+
+                document.getElementById("today-section").style.display =
+                    selected === "today" ? "block" : "none";
+
+                document.getElementById("upcoming-section").style.display =
+                    selected === "upcoming" ? "block" : "none";
+
+            });
+
+        });
+
     </script>
 
 </body>
