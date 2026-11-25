@@ -1,734 +1,514 @@
-/* =========================================
+/* =====================================
    chinesXdonghua
-   AUTOMATIC DONGHUA DISCOVERY ENGINE
-========================================= */
+   Anime Details System
+===================================== */
 
-(function () {
-
-"use strict";
-
-const API_URL = "https://graphql.anilist.co";
-
-const CACHE_TIME = 15 * 60 * 1000;
-
-const cache = new Map();
+const AnimeAPI = "https://graphql.anilist.co";
 
 
-/* =========================================
+/* =====================================
    GRAPHQL QUERY
-========================================= */
+===================================== */
 
-const DONGHUA_QUERY = `
+const AnimeDetailsQuery = `
+query ($id: Int) {
 
-query (
-    $page: Int,
-    $perPage: Int,
-    $sort: [MediaSort],
-    $status: MediaStatus,
-    $search: String
-) {
+    Media(id: $id, type: ANIME) {
 
-    Page(
-        page: $page,
-        perPage: $perPage
-    ) {
+        id
 
-        pageInfo {
-            currentPage
-            hasNextPage
-            total
+        title {
+            english
+            romaji
+            native
         }
 
-        media(
-            type: ANIME,
-            countryOfOrigin: "CN",
-            isAdult: false,
-            sort: $sort,
-            status: $status,
-            search: $search
-        ) {
+        description(asHtml: false)
 
-            id
-
-            title {
-                english
-                romaji
-                native
-            }
-
-            description(asHtml: false)
-
-            coverImage {
-                large
-                extraLarge
-            }
-
-            bannerImage
-
-            episodes
-
-            status
-
-            format
-
-            genres
-
-            averageScore
-
-            popularity
-
-            season
-
-            seasonYear
-
-            startDate {
-                year
-                month
-                day
-            }
-
-            updatedAt
-
+        coverImage {
+            extraLarge
+            large
+            color
         }
 
+        bannerImage
+
+        episodes
+
+        duration
+
+        status
+
+        averageScore
+
+        popularity
+
+        season
+
+        seasonYear
+
+        format
+
+        genres
+
+        countryOfOrigin
+
+        studios {
+            nodes {
+                name
+            }
+        }
+
+        nextAiringEpisode {
+            episode
+            airingAt
+        }
     }
-
 }
-
 `;
 
 
-/* =========================================
+/* =====================================
    API REQUEST
-========================================= */
-
-async function requestAPI(variables = {}) {
-
-    const cacheKey = JSON.stringify(variables);
-
-    const cached = cache.get(cacheKey);
-
-    if (
-        cached &&
-        Date.now() - cached.time < CACHE_TIME
-    ) {
-
-        return cached.data;
-
-    }
-
-
-    const response = await fetch(API_URL, {
-
-        method: "POST",
-
-        headers: {
-
-            "Content-Type": "application/json",
-
-            "Accept": "application/json"
-
-        },
-
-        body: JSON.stringify({
-
-            query: DONGHUA_QUERY,
-
-            variables: {
-
-                page: 1,
-
-                perPage: 20,
-
-                ...variables
-
-            }
-
-        })
-
-    });
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            "AniList API Error: " + response.status
-        );
-
-    }
-
-
-    const result = await response.json();
-
-
-    if (result.errors) {
-
-        throw new Error(
-            result.errors[0].message
-        );
-
-    }
-
-
-    const data = result.data.Page;
-
-
-    cache.set(cacheKey, {
-
-        time: Date.now(),
-
-        data
-
-    });
-
-
-    return data;
-
-}
-
-
-/* =========================================
-   GET TRENDING DONGHUA
-========================================= */
-
-async function getTrending(page = 1) {
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        sort: ["TRENDING_DESC"]
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   GET POPULAR DONGHUA
-========================================= */
-
-async function getPopular(page = 1) {
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        sort: ["POPULARITY_DESC"]
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   GET ONGOING DONGHUA
-========================================= */
-
-async function getOngoing(page = 1) {
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        sort: ["POPULARITY_DESC"],
-
-        status: "RELEASING"
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   GET COMPLETED DONGHUA
-========================================= */
-
-async function getCompleted(page = 1) {
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        sort: ["POPULARITY_DESC"],
-
-        status: "FINISHED"
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   GET LATEST DONGHUA
-========================================= */
-
-async function getLatest(page = 1) {
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        sort: ["START_DATE_DESC"]
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   SEARCH DONGHUA
-========================================= */
-
-async function searchDonghua(keyword, page = 1) {
-
-    if (!keyword || !keyword.trim()) {
-
-        return [];
-
-    }
-
-    const result = await requestAPI({
-
-        page,
-
-        perPage: 20,
-
-        search: keyword.trim(),
-
-        sort: ["SEARCH_MATCH"]
-
-    });
-
-    return result.media;
-
-}
-
-
-/* =========================================
-   GET ANIME DETAILS
-========================================= */
+===================================== */
 
 async function getAnimeDetails(id) {
 
-    const response = await fetch(API_URL, {
+    try {
 
-        method: "POST",
+        const response = await fetch(AnimeAPI, {
 
-        headers: {
+            method: "POST",
 
-            "Content-Type": "application/json",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
 
-            "Accept": "application/json"
+            body: JSON.stringify({
 
-        },
+                query: AnimeDetailsQuery,
 
-        body: JSON.stringify({
-
-            query: `
-
-            query ($id: Int) {
-
-                Media(
-                    id: $id,
-                    type: ANIME,
-                    countryOfOrigin: "CN",
-                    isAdult: false
-                ) {
-
-                    id
-
-                    title {
-                        english
-                        romaji
-                        native
-                    }
-
-                    description(asHtml: false)
-
-                    coverImage {
-                        extraLarge
-                        large
-                    }
-
-                    bannerImage
-
-                    episodes
-
-                    status
-
-                    genres
-
-                    averageScore
-
-                    format
-
-                    season
-
-                    seasonYear
-
-                    studios(isMain: true) {
-                        nodes {
-                            name
-                        }
-                    }
-
+                variables: {
+                    id: Number(id)
                 }
 
-            }
+            })
 
-            `,
+        });
 
-            variables: {
+        if (!response.ok) {
+            throw new Error("Unable to fetch anime");
+        }
 
-                id: Number(id)
+        const result = await response.json();
 
-            }
+        const anime = result.data.Media;
 
-        })
+        if (!anime || anime.countryOfOrigin !== "CN") {
+            throw new Error("Chinese Donghua not found");
+        }
 
-    });
+        return anime;
 
+    } catch (error) {
 
-    if (!response.ok) {
-
-        throw new Error("Unable to load anime.");
-
-    }
-
-
-    const result = await response.json();
-
-    const anime = result.data?.Media;
-
-
-    if (!anime) {
+        console.error("Anime Details Error:", error);
 
         return null;
 
     }
 
+}
 
-    return anime;
+
+/* =====================================
+   TITLE
+===================================== */
+
+function getAnimeTitle(anime) {
+
+    return anime.title.english ||
+           anime.title.romaji ||
+           anime.title.native ||
+           "Unknown Donghua";
 
 }
 
 
-/* =========================================
-   CREATE ANIME CARD
-========================================= */
+/* =====================================
+   ESCAPE HTML
+===================================== */
 
-function createCard(anime) {
+function animeEscape(value) {
 
-    const card = document.createElement("div");
+    return String(value || "").replace(/[&<>"']/g, char => ({
 
-    card.className = "card donghua-card";
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
 
-    const title =
+    })[char]);
 
-        anime.title.english ||
-
-        anime.title.romaji ||
-
-        anime.title.native ||
-
-        "Unknown Donghua";
+}
 
 
-    const image =
+/* =====================================
+   DESCRIPTION
+===================================== */
 
-        anime.coverImage.extraLarge ||
+function cleanDescription(description) {
 
-        anime.coverImage.large;
+    const div = document.createElement("div");
 
+    div.innerHTML = description || "";
 
-    const status =
+    return div.textContent || div.innerText || "";
 
-        anime.status === "RELEASING"
-
-        ? "ONGOING"
-
-        : anime.status === "FINISHED"
-
-        ? "COMPLETED"
-
-        : anime.status;
+}
 
 
-    card.innerHTML = `
+/* =====================================
+   STATUS
+===================================== */
 
-        <div class="relative">
+function formatAnimeStatus(status) {
 
-            <img
-                src="${escapeAttribute(image)}"
-                alt="${escapeAttribute(title)}"
-                loading="lazy"
-                style="width:100%;height:215px;object-fit:cover;border-radius:10px;"
-            >
+    const statuses = {
 
-            <span class="badge absolute top-2 left-2">
+        RELEASING: "Ongoing",
 
-                ${escapeHTML(status)}
+        FINISHED: "Completed",
 
+        NOT_YET_RELEASED: "Upcoming",
+
+        CANCELLED: "Cancelled",
+
+        HIATUS: "On Hiatus"
+
+    };
+
+    return statuses[status] || status;
+
+}
+
+
+/* =====================================
+   RENDER DETAILS
+===================================== */
+
+function renderAnimeDetails(anime) {
+
+    const title = animeEscape(getAnimeTitle(anime));
+
+    const description = animeEscape(
+        cleanDescription(anime.description)
+    );
+
+    const poster = anime.coverImage.extraLarge ||
+                   anime.coverImage.large;
+
+    const banner = anime.bannerImage || poster;
+
+    const score = anime.averageScore
+        ? (anime.averageScore / 10).toFixed(1)
+        : "N/A";
+
+    const studios = anime.studios.nodes
+        .map(studio => animeEscape(studio.name))
+        .join(", ") || "Unknown";
+
+    const genres = anime.genres.map(genre => {
+
+        return `
+            <span class="bg-white/10 px-3 py-2 rounded-full text-xs">
+                ${animeEscape(genre)}
             </span>
+        `;
 
-        </div>
+    }).join("");
+
+    const container = document.getElementById("anime-details");
+
+    if (!container) return;
+
+    container.innerHTML = `
+
+        <section class="relative">
+
+            <div class="absolute inset-0">
+
+                <img
+                    src="${banner}"
+                    class="w-full h-full object-cover opacity-20"
+                    alt=""
+                >
+
+                <div class="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/70 to-transparent">
+                </div>
+
+            </div>
+
+            <div class="relative max-w-7xl mx-auto px-4 py-12">
+
+                <div class="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
+
+                    <div>
+
+                        <img
+                            src="${poster}"
+                            alt="${title}"
+                            class="w-full rounded-2xl shadow-2xl"
+                        >
+
+                        <button
+                            id="add-list-btn"
+                            class="w-full bg-brand hover:bg-orange-600 py-3 rounded-xl font-bold mt-5">
+
+                            + Add to My List
+
+                        </button>
+
+                    </div>
 
 
-        <h3 class="text-sm font-bold mt-2">
+                    <div class="flex flex-col justify-center">
 
-            ${escapeHTML(title)}
+                        <p class="text-brand font-bold text-xs tracking-widest mb-3">
+                            CHINESE DONGHUA
+                        </p>
 
-        </h3>
+                        <h1 class="text-3xl md:text-5xl font-black mb-5">
+                            ${title}
+                        </h1>
+
+                        <div class="flex flex-wrap gap-3 mb-5 text-sm">
+
+                            <span class="bg-white/10 px-3 py-2 rounded-lg">
+                                ⭐ ${score}
+                            </span>
+
+                            <span class="bg-white/10 px-3 py-2 rounded-lg">
+                                ${animeEscape(formatAnimeStatus(anime.status))}
+                            </span>
+
+                            <span class="bg-white/10 px-3 py-2 rounded-lg">
+                                ${anime.episodes || "?"} Episodes
+                            </span>
+
+                            <span class="bg-white/10 px-3 py-2 rounded-lg">
+                                ${anime.seasonYear || "Unknown Year"}
+                            </span>
+
+                        </div>
 
 
-        <p class="text-xs text-gray-400 mt-1">
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${genres}
+                        </div>
 
-            ${anime.seasonYear || "Unknown Year"}
 
-            ·
+                        <h2 class="text-xl font-bold mb-3">
+                            Synopsis
+                        </h2>
 
-            ${anime.episodes || "?"} Episodes
+                        <p class="text-gray-300 leading-7 text-sm">
+                            ${description || "No description available."}
+                        </p>
 
-        </p>
+
+                        <div class="grid grid-cols-2 gap-4 mt-7">
+
+                            <div>
+                                <p class="text-gray-500 text-xs">
+                                    FORMAT
+                                </p>
+
+                                <p class="font-semibold mt-1">
+                                    ${animeEscape(anime.format || "Unknown")}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p class="text-gray-500 text-xs">
+                                    STUDIO
+                                </p>
+
+                                <p class="font-semibold mt-1">
+                                    ${studios}
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            id="watch-now-btn"
+                            class="bg-brand hover:bg-orange-600 rounded-xl py-4 px-8 font-bold mt-8 w-full md:w-fit">
+
+                            ▶ Watch Now
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
 
     `;
 
 
-    card.addEventListener("click", () => {
+    /* =====================================
+       MY LIST BUTTON
+    ===================================== */
 
-        window.location.href =
+    const listButton = document.getElementById("add-list-btn");
 
-            "anime.html?id=" + anime.id;
+    if (window.DonghuaApp) {
 
-    });
+        const saved = DonghuaApp.isInList(anime.id);
+
+        if (saved) {
+            listButton.textContent = "✓ Added to My List";
+        }
+
+        listButton.addEventListener("click", () => {
+
+            if (DonghuaApp.isInList(anime.id)) {
+
+                DonghuaApp.removeFromList(anime.id);
+
+                listButton.textContent = "+ Add to My List";
+
+            } else {
+
+                DonghuaApp.addToList({
+
+                    id: anime.id,
+
+                    title: getAnimeTitle(anime),
+
+                    image: poster
+
+                });
+
+                listButton.textContent = "✓ Added to My List";
+
+            }
+
+        });
+
+    }
 
 
-    return card;
+    /* =====================================
+       WATCH BUTTON
+    ===================================== */
+
+    document.getElementById("watch-now-btn")
+        .addEventListener("click", () => {
+
+            window.location.href =
+                `watch.html?id=${anime.id}&episode=1`;
+
+        });
 
 }
 
 
-/* =========================================
-   SECURITY HELPERS
-========================================= */
+/* =====================================
+   LOAD ANIME PAGE
+===================================== */
 
-function escapeHTML(value) {
+async function loadAnimePage() {
 
-    return String(value ?? "").replace(
+    const params = new URLSearchParams(window.location.search);
 
-        /[&<>"']/g,
+    const id = params.get("id");
 
-        char => ({
+    const container = document.getElementById("anime-details");
 
-            "&": "&amp;",
+    if (!id || !/^\d+$/.test(id)) {
 
-            "<": "&lt;",
-
-            ">": "&gt;",
-
-            '"': "&quot;",
-
-            "'": "&#39;"
-
-        })[char]
-
-    );
-
-}
-
-
-function escapeAttribute(value) {
-
-    return escapeHTML(value);
-
-}
-
-
-/* =========================================
-   RENDER ANIME LIST
-========================================= */
-
-function renderList(containerId, animeList) {
-
-    const container =
-
-        document.getElementById(containerId);
-
-
-    if (!container) {
-
-        console.warn(
-            "Container not found:",
-            containerId
-        );
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-20">
+                    <h2 class="text-2xl font-bold">
+                        Invalid Donghua ID
+                    </h2>
+                    <a href="index.html" class="text-brand mt-4 inline-block">
+                        Go Home
+                    </a>
+                </div>
+            `;
+        }
 
         return;
 
     }
 
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-24 text-gray-400">
+                Loading Donghua Details...
+            </div>
+        `;
+    }
 
-    container.innerHTML = "";
+    const anime = await getAnimeDetails(id);
 
+    if (!anime) {
 
-    if (!animeList.length) {
-
-        container.textContent =
-            "No Donghua found.";
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-20">
+                    <h2 class="text-2xl font-bold">
+                        Donghua Not Found
+                    </h2>
+                    <p class="text-gray-500 mt-3">
+                        Please try another title.
+                    </p>
+                </div>
+            `;
+        }
 
         return;
 
     }
 
-
-    animeList.forEach(anime => {
-
-        container.appendChild(
-            createCard(anime)
-        );
-
-    });
+    renderAnimeDetails(anime);
 
 }
 
 
-/* =========================================
-   AUTOMATIC HOMEPAGE DISCOVERY
-========================================= */
+/* =====================================
+   GLOBAL OBJECT
+===================================== */
 
-async function loadDiscovery() {
+window.DonghuaAnime = {
 
-    const sections = [
+    getDetails: getAnimeDetails,
 
-        {
+    load: loadAnimePage,
 
-            id: "trending-list",
-
-            fetch: getTrending
-
-        },
-
-        {
-
-            id: "ongoing-list",
-
-            fetch: getOngoing
-
-        },
-
-        {
-
-            id: "completed-list",
-
-            fetch: getCompleted
-
-        },
-
-        {
-
-            id: "latest-list",
-
-            fetch: getLatest
-
-        }
-
-    ];
-
-
-    for (const section of sections) {
-
-        const container =
-
-            document.getElementById(section.id);
-
-
-        if (!container) continue;
-
-
-        try {
-
-            const anime = await section.fetch();
-
-            renderList(section.id, anime);
-
-        }
-
-        catch(error) {
-
-            console.error(error);
-
-            container.textContent =
-                "Unable to load Donghua.";
-
-        }
-
-    }
-
-}
-
-
-/* =========================================
-   GLOBAL API
-========================================= */
-
-window.DonghuaAPI = {
-
-    getTrending,
-
-    getPopular,
-
-    getOngoing,
-
-    getCompleted,
-
-    getLatest,
-
-    searchDonghua,
-
-    getAnimeDetails,
-
-    createCard,
-
-    renderList,
-
-    loadDiscovery
+    render: renderAnimeDetails
 
 };
 
 
-/* =========================================
-   AUTO INITIALIZATION
-========================================= */
+/* =====================================
+   AUTO START
+===================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    if (document.getElementById("trending-list")) {
-
-        loadDiscovery();
-
+    if (document.getElementById("anime-details")) {
+        loadAnimePage();
     }
 
 });
-
-
-})();
