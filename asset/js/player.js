@@ -1,394 +1,477 @@
 /* =====================================
    chinesXdonghua
-   Smart Streaming Engine
+   Advanced Player System
 ===================================== */
 
 (function () {
 
-"use strict";
+    "use strict";
 
-const DonghuaPlayer = {
+    const video = document.getElementById("video");
 
-    video: null,
-    sources: [],
-    currentSource: null,
-    currentIndex: 0,
+    if (!video) return;
 
-    settings: {
-        autoServer: true,
-        rememberPosition: true,
-        defaultSpeed: 1,
-        autoNext: true
-    },
 
-    callbacks: {},
+    /* =====================================
+       PLAYER STATE
+    ===================================== */
 
-    /* INITIALIZE */
+    const state = {
 
-    init(options = {}) {
+        sources: [],
 
-        this.video = document.getElementById("video");
+        currentSource: null,
 
-        if (!this.video) {
-            console.warn("Video element not found.");
-            return;
+        currentServer: "auto",
+
+        currentEpisode: 1,
+
+        isLoading: false,
+
+        isPlaying: false,
+
+        lastPosition: 0
+
+    };
+
+
+    /* =====================================
+       ELEMENTS
+    ===================================== */
+
+    const statusElement =
+        document.getElementById("server-status");
+
+    const messageElement =
+        document.getElementById("player-message");
+
+
+    /* =====================================
+       STATUS MESSAGE
+    ===================================== */
+
+    function setStatus(message) {
+
+        if (statusElement) {
+            statusElement.textContent = message;
         }
 
-        this.settings = {
-            ...this.settings,
-            ...options
-        };
-
-        this.bindEvents();
-
-        console.log("DonghuaPlayer initialized.");
-
-    },
+    }
 
 
-    /* REGISTER VIDEO SOURCES */
+    function showMessage(message) {
 
-    setSources(sources = []) {
+        if (!messageElement) return;
 
-        this.sources = sources.filter(source => {
+        messageElement.classList.remove("hidden");
+
+        messageElement.innerHTML = `
+            <div class="text-center">
+                <p class="text-2xl mb-3">▶</p>
+                <p class="text-sm text-gray-300">
+                    ${escapeHTML(message)}
+                </p>
+            </div>
+        `;
+
+    }
+
+
+    function escapeHTML(value) {
+
+        return String(value).replace(/[&<>"']/g, char => ({
+
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+
+        })[char]);
+
+    }
+
+
+    /* =====================================
+       REGISTER AUTHORIZED SOURCES
+    ===================================== */
+
+    function setSources(sources) {
+
+        if (!Array.isArray(sources)) {
+
+            console.error("Sources must be an array");
+
+            return false;
+
+        }
+
+        state.sources = sources.filter(source => {
 
             return source &&
-                   source.name &&
-                   source.url &&
-                   source.authorized === true;
+                   source.authorized === true &&
+                   typeof source.url === "string" &&
+                   source.url.trim() !== "" &&
+                   ["auto", "official", "backup"].includes(source.server);
 
         });
 
-        this.currentIndex = 0;
+        state.currentSource = null;
 
-        if (this.settings.autoServer) {
-            this.playAuto();
-        }
+        if (!state.sources.length) {
 
-    },
+            setStatus("No authorized video source available.");
 
+            showMessage("No playable video source is currently available.");
 
-    /* SERVER AVAILABILITY */
-
-    async checkSource(source) {
-
-        if (!source || !source.url) {
             return false;
-        }
-
-        if (typeof source.check === "function") {
-
-            try {
-                return await source.check();
-            } catch {
-                return false;
-            }
 
         }
 
         return true;
 
-    },
+    }
 
 
-    /* AUTO SERVER */
+    /* =====================================
+       SOURCE VALIDATION
+    ===================================== */
 
-    async playAuto() {
+    function isValidSource(source) {
 
-        if (!this.sources.length) {
+        if (!source || source.authorized !== true) {
+            return false;
+        }
 
-            this.notify(
-                "No authorized streaming source available."
-            );
+        try {
+
+            const url = new URL(source.url);
+
+            return url.protocol === "https:" ||
+                   url.protocol === "http:";
+
+        } catch (error) {
 
             return false;
 
         }
 
-        for (let i = 0; i < this.sources.length; i++) {
-
-            const source = this.sources[i];
-
-            const available = await this.checkSource(source);
-
-            if (!available) continue;
-
-            const success = await this.loadSource(source, i);
-
-            if (success) return true;
-
-        }
-
-        this.notify("All available servers failed.");
-
-        return false;
-
-    },
+    }
 
 
-    /* LOAD SOURCE */
+    /* =====================================
+       SELECT SERVER
+    ===================================== */
 
-    loadSource(source, index) {
+    function selectServer(server) {
 
-        return new Promise(resolve => {
+        const buttons = document.querySelectorAll("[data-server]");
 
-            if (!this.video || !source) {
-                resolve(false);
-                return;
-            }
+        buttons.forEach(button => {
 
-            const video = this.video;
-
-            const previousTime = video.currentTime || 0;
-
-            const wasPlaying = !video.paused;
-
-            const savedPosition = this.getSavedPosition();
-
-            const startTime = this.settings.rememberPosition
-                ? Math.max(previousTime, savedPosition)
-                : 0;
-
-            this.currentSource = source;
-
-            this.currentIndex = index;
-
-            this.updateServerUI(source.name);
-
-            this.notify("Connecting to " + source.name);
-
-            let finished = false;
-
-            const cleanup = () => {
-
-                video.removeEventListener("loadedmetadata", success);
-                video.removeEventListener("error", failure);
-
-            };
-
-            const success = async () => {
-
-                if (finished) return;
-
-                finished = true;
-
-                cleanup();
-
-                video.currentTime = Math.min(
-                    startTime,
-                    Number.isFinite(video.duration)
-                        ? video.duration
-                        : startTime
-                );
-
-                if (wasPlaying) {
-
-                    try {
-                        await video.play();
-                    } catch {}
-                }
-
-                this.notify("Connected: " + source.name);
-
-                this.emit("sourceChanged", source);
-
-                resolve(true);
-
-            };
-
-            const failure = () => {
-
-                if (finished) return;
-
-                finished = true;
-
-                cleanup();
-
-                this.notify("Server unavailable: " + source.name);
-
-                resolve(false);
-
-            };
-
-            video.addEventListener("loadedmetadata", success);
-
-            video.addEventListener("error", failure);
-
-            video.src = source.url;
-
-            video.load();
-
-            setTimeout(() => {
-
-                if (finished) return;
-
-                finished = true;
-
-                cleanup();
-
-                resolve(false);
-
-            }, 15000);
+            button.classList.toggle(
+                "active",
+                button.dataset.server === server
+            );
 
         });
 
-    },
+        state.currentServer = server;
+
+        if (server === "auto") {
+
+            playAuto();
+
+            return;
+
+        }
+
+        const source = state.sources.find(item => {
+
+            return item.server === server &&
+                   isValidSource(item);
+
+        });
+
+        if (!source) {
+
+            setStatus("This server has no available authorized source.");
+
+            showMessage("No source available for this server.");
+
+            return;
+
+        }
+
+        loadSource(source);
+
+    }
 
 
-    /* MANUAL SERVER SWITCH */
+    /* =====================================
+       AUTO SERVER
+    ===================================== */
 
-    async switchServer(index) {
+    function playAuto() {
 
-        if (!this.sources[index]) {
+        const source = state.sources.find(item => {
+
+            return item.server === "official" &&
+                   isValidSource(item);
+
+        }) || state.sources.find(item => {
+
+            return item.server === "backup" &&
+                   isValidSource(item);
+
+        });
+
+        if (!source) {
+
+            setStatus("No authorized streaming source configured.");
+
+            showMessage("Video playback is currently unavailable.");
+
             return false;
+
         }
 
-        const source = this.sources[index];
+        loadSource(source);
 
-        const available = await this.checkSource(source);
+        return true;
 
-        if (!available) {
+    }
 
-            this.notify("This server is unavailable.");
+
+    /* =====================================
+       LOAD VIDEO SOURCE
+    ===================================== */
+
+    function loadSource(source) {
+
+        if (!isValidSource(source)) {
+
+            setStatus("Invalid or unauthorized video source.");
 
             return false;
 
         }
 
-        const success = await this.loadSource(source, index);
+        state.currentSource = source;
 
-        if (!success) {
+        state.isLoading = true;
 
-            this.notify("Unable to connect to selected server.");
+        setStatus("Connecting to " + source.server + " server...");
 
+        video.pause();
+
+        video.src = source.url;
+
+        video.load();
+
+        return true;
+
+    }
+
+
+    /* =====================================
+       SERVER BUTTON EVENTS
+    ===================================== */
+
+    function bindServerButtons() {
+
+        document.querySelectorAll("[data-server]")
+            .forEach(button => {
+
+                button.addEventListener("click", () => {
+
+                    selectServer(button.dataset.server);
+
+                });
+
+            });
+
+    }
+
+
+    /* =====================================
+       VIDEO EVENTS
+    ===================================== */
+
+    video.addEventListener("loadedmetadata", () => {
+
+        state.isLoading = false;
+
+        state.lastPosition = 0;
+
+        setStatus("Video source connected successfully.");
+
+        showMessage("Press play to start watching.");
+
+    });
+
+
+    video.addEventListener("canplay", () => {
+
+        state.isLoading = false;
+
+        setStatus("Video ready to play.");
+
+    });
+
+
+    video.addEventListener("playing", () => {
+
+        state.isPlaying = true;
+
+        if (messageElement) {
+            messageElement.classList.add("hidden");
         }
 
-        return success;
+        setStatus("Playing from " + (state.currentSource?.server || "selected") + " server.");
 
-    },
-
-
-    /* FALLBACK */
-
-    async fallback() {
-
-        if (!this.sources.length) return;
-
-        const nextIndex = this.sources.findIndex(
-            (source, index) =>
-                index > this.currentIndex
-        );
-
-        if (nextIndex !== -1) {
-
-            await this.switchServer(nextIndex);
-
-        } else if (this.settings.autoServer) {
-
-            await this.playAuto();
-
-        }
-
-    },
+    });
 
 
-    /* DOUBLE TAP SEEK */
+    video.addEventListener("pause", () => {
 
-    seek(seconds) {
+        state.isPlaying = false;
 
-        if (!this.video) return;
-
-        if (!Number.isFinite(this.video.duration)) return;
-
-        this.video.currentTime = Math.max(
-            0,
-            Math.min(
-                this.video.duration,
-                this.video.currentTime + seconds
-            )
-        );
-
-        this.emit("seek", seconds);
-
-    },
+    });
 
 
-    /* PLAY / PAUSE */
+    video.addEventListener("waiting", () => {
 
-    togglePlay() {
+        setStatus("Buffering video...");
 
-        if (!this.video) return;
+    });
 
-        if (this.video.paused) {
 
-            this.video.play().catch(() => {});
+    video.addEventListener("error", () => {
+
+        state.isLoading = false;
+
+        setStatus("Video source failed. Select another available server.");
+
+        showMessage("Playback failed. Try another authorized source.");
+
+        console.error("Video error:", video.error);
+
+    });
+
+
+    /* =====================================
+       PLAY / PAUSE
+    ===================================== */
+
+    async function togglePlay() {
+
+        if (video.paused) {
+
+            if (!video.src) {
+
+                showMessage("No video source available.");
+
+                return;
+
+            }
+
+            try {
+
+                await video.play();
+
+            } catch (error) {
+
+                setStatus("Unable to start playback.");
+
+            }
 
         } else {
 
-            this.video.pause();
+            video.pause();
 
         }
 
-    },
+    }
 
 
-    /* PLAYBACK SPEED */
+    /* =====================================
+       SEEK
+    ===================================== */
 
-    setSpeed(speed) {
+    function seek(seconds) {
 
-        if (!this.video) return;
+        if (!Number.isFinite(video.duration)) return;
+
+        video.currentTime = Math.max(
+
+            0,
+
+            Math.min(
+                video.duration,
+                video.currentTime + seconds
+            )
+
+        );
+
+    }
+
+
+    /* =====================================
+       PLAYBACK SPEED
+    ===================================== */
+
+    function setSpeed(speed) {
 
         const value = Number(speed);
 
-        if (value >= 0.25 && value <= 4) {
-
-            this.video.playbackRate = value;
-
+        if (![0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].includes(value)) {
+            return;
         }
 
-    },
+        video.playbackRate = value;
+
+    }
 
 
-    /* VOLUME */
+    /* =====================================
+       VOLUME
+    ===================================== */
 
-    setVolume(value) {
+    function setVolume(volume) {
 
-        if (!this.video) return;
-
-        this.video.volume = Math.max(
+        video.volume = Math.max(
             0,
-            Math.min(1, Number(value))
+            Math.min(1, Number(volume))
         );
 
-    },
+    }
 
 
-    /* MUTE */
+    function toggleMute() {
 
-    toggleMute() {
+        video.muted = !video.muted;
 
-        if (!this.video) return;
+        return video.muted;
 
-        this.video.muted = !this.video.muted;
-
-        return this.video.muted;
-
-    },
+    }
 
 
-    /* FULLSCREEN */
+    /* =====================================
+       FULLSCREEN
+    ===================================== */
 
-    async fullscreen() {
+    async function fullscreen() {
 
-        const player = document.getElementById("player-area");
+        const container = document.querySelector(".player-container");
 
-        if (!player) return;
+        if (!container) return;
 
         try {
 
             if (!document.fullscreenElement) {
 
-                await player.requestFullscreen();
+                await container.requestFullscreen();
 
             } else {
 
@@ -398,163 +481,133 @@ const DonghuaPlayer = {
 
         } catch (error) {
 
-            console.error(error);
-
-        }
-
-    },
-
-
-    /* SAVE POSITION */
-
-    savePosition() {
-
-        if (!this.video) return;
-
-        if (!this.settings.rememberPosition) return;
-
-        if (!this.currentSource) return;
-
-        const key = this.getPositionKey();
-
-        localStorage.setItem(key, JSON.stringify({
-
-            time: this.video.currentTime || 0,
-
-            updatedAt: Date.now()
-
-        }));
-
-    },
-
-
-    /* GET POSITION */
-
-    getSavedPosition() {
-
-        const key = this.getPositionKey();
-
-        try {
-
-            const data = JSON.parse(
-                localStorage.getItem(key)
-            );
-
-            return data?.time || 0;
-
-        } catch {
-
-            return 0;
-
-        }
-
-    },
-
-
-    getPositionKey() {
-
-        const params = new URLSearchParams(location.search);
-
-        return "chinesxdonghua_position_" +
-            (params.get("id") || "unknown") +
-            "_" +
-            (params.get("ep") || "1");
-
-    },
-
-
-    /* SERVER UI */
-
-    updateServerUI(name) {
-
-        document.querySelectorAll(".server-btn").forEach(button => {
-
-            button.classList.toggle(
-                "active",
-                button.dataset.server === name
-            );
-
-        });
-
-    },
-
-
-    /* EVENTS */
-
-    bindEvents() {
-
-        this.video.addEventListener("error", () => {
-
-            if (this.settings.autoServer) {
-
-                this.fallback();
-
-            }
-
-        });
-
-        this.video.addEventListener("timeupdate", () => {
-
-            this.savePosition();
-
-        });
-
-        this.video.addEventListener("ended", () => {
-
-            this.emit("ended");
-
-        });
-
-    },
-
-
-    /* CALLBACK SYSTEM */
-
-    on(event, callback) {
-
-        if (!this.callbacks[event]) {
-
-            this.callbacks[event] = [];
-
-        }
-
-        this.callbacks[event].push(callback);
-
-    },
-
-
-    emit(event, data) {
-
-        (this.callbacks[event] || []).forEach(callback => {
-
-            callback(data);
-
-        });
-
-    },
-
-
-    /* MESSAGE */
-
-    notify(message) {
-
-        console.log("[DonghuaPlayer]", message);
-
-        const status = document.getElementById("server-status");
-
-        if (status) {
-
-            status.textContent = message;
+            console.error("Fullscreen error:", error);
 
         }
 
     }
 
-};
+
+    /* =====================================
+       SAVE WATCH HISTORY
+    ===================================== */
+
+    function saveProgress() {
+
+        if (!window.DonghuaApp) return;
+
+        const params = new URLSearchParams(location.search);
+
+        const id = Number(params.get("id"));
+
+        if (!id || !state.currentSource) return;
+
+        const title =
+            document.getElementById("anime-title")?.textContent ||
+            "Unknown Donghua";
+
+        const image = "";
+
+        DonghuaApp.saveHistory(
+
+            {
+                id: id,
+                title: title,
+                image: image
+            },
+
+            state.currentEpisode,
+
+            video.currentTime || 0
+
+        );
+
+    }
 
 
-/* GLOBAL ACCESS */
+    video.addEventListener("timeupdate", () => {
 
-window.DonghuaPlayer = DonghuaPlayer;
+        if (
+            video.currentTime > 0 &&
+            Math.floor(video.currentTime) % 15 === 0
+        ) {
+
+            if (Math.floor(video.currentTime) !== state.lastPosition) {
+
+                state.lastPosition = Math.floor(video.currentTime);
+
+                saveProgress();
+
+            }
+
+        }
+
+    });
+
+
+    video.addEventListener("ended", () => {
+
+        saveProgress();
+
+        setStatus("Episode finished.");
+
+    });
+
+
+    /* =====================================
+       PLAYER INITIALIZATION
+    ===================================== */
+
+    function init() {
+
+        bindServerButtons();
+
+        setStatus("Waiting for an authorized video source.");
+
+        console.log("Donghua Player initialized.");
+
+    }
+
+
+    /* =====================================
+       PUBLIC API
+    ===================================== */
+
+    window.DonghuaPlayer = {
+
+        init: init,
+
+        setSources: setSources,
+
+        playAuto: playAuto,
+
+        loadSource: loadSource,
+
+        switchServer: selectServer,
+
+        togglePlay: togglePlay,
+
+        seek: seek,
+
+        setSpeed: setSpeed,
+
+        setVolume: setVolume,
+
+        toggleMute: toggleMute,
+
+        fullscreen: fullscreen,
+
+        saveProgress: saveProgress,
+
+        getState: () => ({ ...state })
+
+    };
+
+
+    /* =====================================
+       START
+    ===================================== */
+
+    init();
 
 })();
