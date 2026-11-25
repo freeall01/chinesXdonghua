@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08090d">
+<title>Watch | chinesXdonghua</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="asset/css/pages.css">
+<link rel="stylesheet" href="asset/css/player.css">
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<main class="max-w-5xl mx-auto sm:px-4 sm:py-6">
+
+  <!-- PLAYER -->
+  <div id="player-wrap" class="player-wrap">
+
+    <video id="video" playsinline preload="metadata"></video>
+
+    <!-- Catches taps: single tap = show/hide controls, double tap = seek 10s -->
+    <div id="tap-layer"></div>
+
+    <div id="bubble-left" class="seek-bubble left">« 10s</div>
+    <div id="bubble-right" class="seek-bubble right">10s »</div>
+    <div id="toast" class="toast"></div>
+
+    <!-- Controls -->
+    <div id="controls" class="controls show">
+
+      <div class="ctl ctl-top">
+        <span id="player-title" class="player-title"></span>
+        <button id="btn-settings" class="icon-btn" aria-label="Settings">⚙</button>
+      </div>
+
+      <div class="ctl ctl-center">
+        <button id="btn-prev" class="icon-btn big" aria-label="Previous episode">⏮</button>
+        <button id="btn-play" class="icon-btn huge" aria-label="Play or pause">▶</button>
+        <button id="btn-next" class="icon-btn big" aria-label="Next episode">⏭</button>
+      </div>
+
+      <div class="ctl ctl-bottom">
+        <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+        <div class="bottom-row">
+          <span id="time" class="time">0:00 / 0:00</span>
+          <button id="btn-fullscreen" class="icon-btn" aria-label="Fullscreen">⛶</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="settings" class="settings hidden"></div>
+
+    <div id="next-box" class="next-box hidden"></div>
+
+    <div id="spinner" class="player-overlay hidden">
+      <div class="spin"></div>
+      <p id="spinner-text" class="text-sm text-gray-200">Loading...</p>
+    </div>
+
+    <div id="error-box" class="player-overlay hidden">
+      <p id="error-text" class="text-sm text-gray-200 max-w-md"></p>
+      <div class="flex gap-2 flex-wrap justify-center">
+        <button id="btn-retry" class="btn-primary">Retry</button>
+        <button id="btn-try-next" class="btn-ghost">Try next server</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INFO UNDER PLAYER -->
+  <section class="px-4 sm:px-0 mt-5">
+
+    <h1 id="page-title" class="text-xl sm:text-2xl font-black">Loading...</h1>
+    <p id="page-sub" class="text-gray-400 text-sm mt-1"></p>
+
+    <div class="flex flex-wrap gap-3 mt-4">
+      <a id="link-prev" href="#" class="btn-ghost">⏮ Previous</a>
+      <a id="link-next" href="#" class="btn-primary">Next ⏭</a>
+      <a id="link-details" href="#" class="btn-ghost">Details</a>
+    </div>
+
+    <h2 class="text-sm font-bold text-gray-300 mt-6 mb-2">Servers</h2>
+    <div id="servers" class="flex flex-wrap gap-2"></div>
+    <p class="text-xs text-gray-500 mt-2">
+      Server status is checked when it is loaded in the player.
+    </p>
+
+  </section>
+
+</main>
+
+<div id="footer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4/dist/shaka-player.compiled.js"></script>
+<script src="asset/js/nav.js"></script>
+<script src="asset/js/player.js"></script>
+
+</body>
+</html>
 
