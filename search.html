@@ -1,40 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08090d">
-<title>Search Donghua | chinesXdonghua</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="asset/css/pages.css">
+    <title>Search Donghua | chinesXdonghua</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: "#ff6b35",
+                        dark: "#080808",
+                        card: "#151515"
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        body {
+            background: #080808;
+            color: white;
+        }
+
+        .glass {
+            background: rgba(25, 25, 25, 0.9);
+            backdrop-filter: blur(12px);
+        }
+
+        .anime-card {
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .anime-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff6b35;
+        }
+
+        .anime-card img {
+            transition: transform 0.35s ease;
+        }
+
+        .anime-card:hover img {
+            transform: scale(1.05);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+        }
+    </style>
 </head>
 
-<body>
+<body class="min-h-screen">
 
-<div id="navbar"></div>
+    <!-- NAVBAR -->
+    <nav id="navbar"
+        class="sticky top-0 z-50 glass border-b border-white/10">
 
-<main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
 
-  <h1 class="section-title">Search Donghua</h1>
+            <a href="index.html"
+                class="text-2xl font-black tracking-tight">
+                chines<span class="text-brand">X</span>donghua
+            </a>
 
-  <form id="search-form" class="flex gap-2 mb-8">
-    <input id="search-input" type="text" autocomplete="off"
-      placeholder="Type a Donghua name..."
-      class="flex-1 bg-white/10 rounded-lg px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-orange-500">
-    <button type="submit" class="btn-primary">Search</button>
-  </form>
+            <div class="hidden md:flex items-center gap-7 text-sm text-gray-300">
 
-  <p id="status" class="text-gray-400 text-sm mb-4"></p>
-  <div id="results" class="card-grid"></div>
+                <a href="index.html" class="hover:text-brand">Home</a>
 
-</main>
+                <a href="schedule.html" class="hover:text-brand">Schedule</a>
 
-<div id="footer"></div>
+                <a href="search.html" data-nav="search"
+                    class="text-brand">Search</a>
 
-<script src="asset/js/nav.js"></script>
-<script src="asset/js/search.js"></script>
+                <a href="my-list.html" class="hover:text-brand">My List</a>
+
+            </div>
+
+            <button id="menu-toggle"
+                class="md:hidden text-2xl">
+                ☰
+            </button>
+
+        </div>
+
+        <div id="mobile-menu"
+            class="hidden md:hidden border-t border-white/10 p-4 space-y-4">
+
+            <a href="index.html" class="block">Home</a>
+            <a href="schedule.html" class="block">Schedule</a>
+            <a href="search.html" class="block text-brand">Search</a>
+            <a href="my-list.html" class="block">My List</a>
+
+        </div>
+    </nav>
+
+
+    <!-- MAIN -->
+    <main class="max-w-7xl mx-auto px-4 py-10">
+
+        <!-- HEADER -->
+        <section class="text-center mb-10">
+
+            <p class="text-brand uppercase tracking-[4px] text-xs font-bold mb-3">
+                Explore The World Of Donghua
+            </p>
+
+            <h1 class="text-3xl md:text-5xl font-black mb-4">
+                Discover <span class="text-brand">Donghua</span>
+            </h1>
+
+            <p class="text-gray-400 max-w-xl mx-auto">
+                Search your favourite Chinese animation and discover
+                new adventures.
+            </p>
+
+        </section>
+
+
+        <!-- SEARCH BOX -->
+        <section class="max-w-3xl mx-auto mb-10">
+
+            <div class="flex gap-2">
+
+                <div class="relative flex-1">
+
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        🔍
+                    </span>
+
+                    <input
+                        type="search"
+                        id="search-input"
+                        placeholder="Search Donghua..."
+                        autocomplete="off"
+                        class="search-box w-full bg-card border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder-gray-500"
+                    >
+
+                    <div id="search-suggestions"
+                        class="hidden absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-xl overflow-hidden z-40">
+                    </div>
+
+                </div>
+
+                <button
+                    id="search-btn"
+                    class="bg-brand hover:bg-orange-600 px-6 rounded-xl font-bold transition">
+                    Search
+                </button>
+
+            </div>
+
+            <p class="text-gray-500 text-xs mt-3 text-center">
+                Search by Donghua title
+            </p>
+
+        </section>
+
+
+        <!-- FILTER INFO -->
+        <section class="flex items-center justify-between mb-6">
+
+            <div>
+                <h2 class="text-xl font-bold">
+                    Search Results
+                </h2>
+
+                <p class="text-gray-500 text-sm mt-1">
+                    Chinese Animation Collection
+                </p>
+            </div>
+
+            <span class="text-xs text-brand bg-brand/10 px-3 py-2 rounded-full">
+                DONGHUA ONLY
+            </span>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        <section>
+
+            <div id="search-results"
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+
+                <div class="col-span-full text-center py-16">
+
+                    <div class="text-5xl mb-4">🔎</div>
+
+                    <h3 class="text-lg font-bold mb-2">
+                        Find Your Next Donghua
+                    </h3>
+
+                    <p class="text-gray-500 text-sm">
+                        Enter a Donghua title in the search box above.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- LOAD MORE -->
+        <div class="text-center mt-10">
+
+            <button id="load-more"
+                class="hidden bg-white/10 hover:bg-brand px-8 py-3 rounded-xl font-semibold transition">
+                Load More
+            </button>
+
+        </div>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/10 mt-16 py-8">
+
+        <div class="max-w-7xl mx-auto px-4 text-center">
+
+            <h2 class="text-xl font-black mb-2">
+                chines<span class="text-brand">X</span>donghua
+            </h2>
+
+            <p class="text-gray-500 text-sm">
+                Discover the world of Chinese Animation.
+            </p>
+
+            <p class="text-gray-600 text-xs mt-4">
+                © 2026 chinesXdonghua. All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- SCRIPTS -->
+    <script src="asset/js/app.js"></script>
+    <script src="asset/js/nav.js"></script>
+    <script src="asset/js/search.js"></script>
 
 </body>
 </html>
-
