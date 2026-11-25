@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#08090d">
+<title>Search Donghua | chinesXdonghua</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="asset/css/pages.css">
+</head>
+
+<body>
+
+<div id="navbar"></div>
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+  <h1 class="section-title">Search Donghua</h1>
+
+  <form id="search-form" class="flex gap-2 mb-8">
+    <input id="search-input" type="text" autocomplete="off"
+      placeholder="Type a Donghua name..."
+      class="flex-1 bg-white/10 rounded-lg px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-orange-500">
+    <button type="submit" class="btn-primary">Search</button>
+  </form>
+
+  <p id="status" class="text-gray-400 text-sm mb-4"></p>
+  <div id="results" class="card-grid"></div>
+
+</main>
+
+<div id="footer"></div>
+
+<script src="asset/js/nav.js"></script>
+<script src="asset/js/search.js"></script>
+
+</body>
+</html>
 
