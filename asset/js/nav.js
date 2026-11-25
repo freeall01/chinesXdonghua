@@ -1,16 +1,9 @@
 /* =====================================
-   chinesXdonghua
-   Navigation System
+   chinesXdonghua - Navigation System
 ===================================== */
 
-(function () {
-
+(() => {
     "use strict";
-
-
-    /* =====================================
-       ELEMENTS
-    ===================================== */
 
     const navbar = document.getElementById("navbar");
 
@@ -18,291 +11,177 @@
 
     const mobileMenu = document.getElementById("mobile-menu");
 
+    // ---------------------------------
+    // Mobile Menu
+    // ---------------------------------
 
-    /* =====================================
-       MOBILE MENU
-    ===================================== */
-
-    function toggleMobileMenu() {
-
+    function openMenu() {
         if (!mobileMenu) return;
 
-        mobileMenu.classList.toggle("hidden");
+        mobileMenu.classList.add("active");
 
-        const isOpen = !mobileMenu.classList.contains("hidden");
-
-        if (menuToggle) {
-
-            menuToggle.textContent = isOpen ? "✕" : "☰";
-
-            menuToggle.setAttribute(
-                "aria-expanded",
-                String(isOpen)
-            );
-
-        }
-
+        menuToggle?.setAttribute("aria-expanded", "true");
     }
 
-
-    function closeMobileMenu() {
-
+    function closeMenu() {
         if (!mobileMenu) return;
 
-        mobileMenu.classList.add("hidden");
+        mobileMenu.classList.remove("active");
 
-        if (menuToggle) {
-
-            menuToggle.textContent = "☰";
-
-            menuToggle.setAttribute("aria-expanded", "false");
-
-        }
-
+        menuToggle?.setAttribute("aria-expanded", "false");
     }
 
+    function toggleMenu() {
+        if (!mobileMenu) return;
 
-    /* =====================================
-       NAVBAR SCROLL EFFECT
-    ===================================== */
+        mobileMenu.classList.contains("active")
+            ? closeMenu()
+            : openMenu();
+    }
 
-    function handleNavbarScroll() {
+    menuToggle?.addEventListener("click", toggleMenu);
 
+    mobileMenu?.querySelectorAll("a").forEach(link => {
+        link.addEventListener("click", closeMenu);
+    });
+
+    // ---------------------------------
+    // Navbar Scroll Effect
+    // ---------------------------------
+
+    function handleScroll() {
         if (!navbar) return;
 
         if (window.scrollY > 30) {
-
-            navbar.classList.add("shadow-xl");
-
+            navbar.classList.add("scrolled");
         } else {
-
-            navbar.classList.remove("shadow-xl");
-
+            navbar.classList.remove("scrolled");
         }
-
     }
 
+    window.addEventListener("scroll", handleScroll, {
+        passive: true
+    });
 
-    /* =====================================
-       ACTIVE NAVIGATION
-    ===================================== */
+    handleScroll();
 
-    function setActiveNavigation() {
+    // ---------------------------------
+    // Active Navigation
+    // ---------------------------------
 
+    function updateActiveNavigation() {
         const currentPage = location.pathname
             .split("/")
             .pop() || "index.html";
 
-        document.querySelectorAll("[data-nav]")
-            .forEach(link => {
+        document.querySelectorAll("[data-nav]").forEach(link => {
+            const href = link.getAttribute("href");
 
-                const page = link.getAttribute("href");
+            if (!href) return;
 
-                const active = page === currentPage;
+            const linkPage = href.split("?")[0];
 
-                link.classList.toggle("text-brand", active);
-
-                if (active) {
-
-                    link.setAttribute("aria-current", "page");
-
-                } else {
-
-                    link.removeAttribute("aria-current");
-
-                }
-
-            });
-
-    }
-
-
-    /* =====================================
-       CLOSE MENU ON LINK CLICK
-    ===================================== */
-
-    function bindMenuLinks() {
-
-        if (!mobileMenu) return;
-
-        mobileMenu.querySelectorAll("a")
-            .forEach(link => {
-
-                link.addEventListener("click", closeMobileMenu);
-
-            });
-
-    }
-
-
-    /* =====================================
-       SEARCH NAVIGATION
-    ===================================== */
-
-    function bindSearchButtons() {
-
-        document.querySelectorAll("[data-open-search]")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-
-                    location.href = "search.html";
-
-                });
-
-            });
-
-    }
-
-
-    /* =====================================
-       BACK TO TOP
-    ===================================== */
-
-    function createBackToTop() {
-
-        let button = document.getElementById("back-to-top");
-
-        if (!button) {
-
-            button = document.createElement("button");
-
-            button.id = "back-to-top";
-
-            button.type = "button";
-
-            button.textContent = "↑";
-
-            button.setAttribute("aria-label", "Back to top");
-
-            button.className = `
-                fixed bottom-6 right-5 z-40
-                w-12 h-12 rounded-full
-                bg-brand text-white text-2xl
-                shadow-xl
-                hidden
-            `;
-
-            document.body.appendChild(button);
-
-        }
-
-        button.addEventListener("click", () => {
-
-            window.scrollTo({
-
-                top: 0,
-
-                behavior: "smooth"
-
-            });
-
-        });
-
-        window.addEventListener("scroll", () => {
-
-            button.classList.toggle(
-                "hidden",
-                window.scrollY < 400
-            );
-
-        });
-
-    }
-
-
-    /* =====================================
-       KEYBOARD SHORTCUTS
-    ===================================== */
-
-    function bindKeyboardShortcuts() {
-
-        document.addEventListener("keydown", event => {
-
-            if (
-                event.target.matches("input, textarea") ||
-                event.target.isContentEditable
-            ) {
-                return;
+            if (linkPage === currentPage) {
+                link.classList.add("active");
+                link.setAttribute("aria-current", "page");
+            } else {
+                link.classList.remove("active");
+                link.removeAttribute("aria-current");
             }
-
-            if (event.key === "Escape") {
-
-                closeMobileMenu();
-
-            }
-
         });
-
     }
 
+    updateActiveNavigation();
 
-    /* =====================================
-       INITIALIZATION
-    ===================================== */
+    // ---------------------------------
+    // Search Navigation
+    // ---------------------------------
 
-    function init() {
+    document.querySelectorAll("[data-open-search]")
+        .forEach(button => {
+            button.addEventListener("click", () => {
+                window.location.href = "search.html";
+            });
+        });
 
-        if (menuToggle) {
+    // ---------------------------------
+    // Back To Top
+    // ---------------------------------
 
-            menuToggle.addEventListener(
-                "click",
-                toggleMobileMenu
-            );
+    let backToTop = document.getElementById("back-to-top");
 
-        }
+    if (!backToTop) {
+        backToTop = document.createElement("button");
 
-        window.addEventListener(
-            "scroll",
-            handleNavbarScroll
+        backToTop.id = "back-to-top";
+
+        backToTop.type = "button";
+
+        backToTop.className = "back-to-top";
+
+        backToTop.textContent = "↑";
+
+        backToTop.setAttribute("aria-label", "Back to top");
+
+        document.body.appendChild(backToTop);
+    }
+
+    function updateBackToTop() {
+        backToTop.classList.toggle(
+            "visible",
+            window.scrollY > 400
         );
-
-        bindMenuLinks();
-
-        bindSearchButtons();
-
-        setActiveNavigation();
-
-        createBackToTop();
-
-        bindKeyboardShortcuts();
-
-        handleNavbarScroll();
-
-        console.log("Donghua Navigation Initialized.");
-
     }
 
+    window.addEventListener("scroll", updateBackToTop, {
+        passive: true
+    });
 
-    /* =====================================
-       GLOBAL OBJECT
-    ===================================== */
+    backToTop.addEventListener("click", () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    });
+
+    updateBackToTop();
+
+    // ---------------------------------
+    // Escape Key
+    // ---------------------------------
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeMenu();
+        }
+    });
+
+    // ---------------------------------
+    // Close Menu Outside Click
+    // ---------------------------------
+
+    document.addEventListener("click", event => {
+        if (!mobileMenu || !menuToggle) return;
+
+        const clickedInsideMenu =
+            mobileMenu.contains(event.target);
+
+        const clickedToggle =
+            menuToggle.contains(event.target);
+
+        if (!clickedInsideMenu && !clickedToggle) {
+            closeMenu();
+        }
+    });
+
+    // ---------------------------------
+    // Public API
+    // ---------------------------------
 
     window.DonghuaNav = {
-
-        init: init,
-
-        closeMenu: closeMobileMenu,
-
-        toggleMenu: toggleMobileMenu,
-
-        setActive: setActiveNavigation
-
+        openMenu,
+        closeMenu,
+        toggleMenu
     };
-
-
-    /* =====================================
-       START
-    ===================================== */
-
-    if (document.readyState === "loading") {
-
-        document.addEventListener("DOMContentLoaded", init);
-
-    } else {
-
-        init();
-
-    }
 
 })();
