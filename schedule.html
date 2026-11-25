@@ -1,35 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#08090d">
-<title>Release Schedule | chinesXdonghua</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="asset/css/pages.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Donghua Schedule | chinesXdonghua</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: "#ff6b35",
+                        dark: "#080808",
+                        card: "#151515"
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #080808;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .glass {
+            background: rgba(20, 20, 20, 0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .schedule-card {
+            background: #151515;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: 0.25s ease;
+        }
+
+        .schedule-card:hover {
+            border-color: #ff6b35;
+            transform: translateY(-3px);
+        }
+
+        .poster {
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+        }
+
+        .time-box {
+            background: rgba(255,107,53,0.1);
+            border: 1px solid rgba(255,107,53,0.2);
+        }
+    </style>
 </head>
 
 <body>
 
-<div id="navbar"></div>
+    <!-- NAVBAR -->
+    <nav id="navbar"
+        class="sticky top-0 z-50 glass border-b border-white/10">
 
-<main class="max-w-5xl mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
 
-  <h1 class="section-title">Release Schedule</h1>
-  <p class="text-gray-400 text-sm mb-8">
-    Next episode of every ongoing Donghua, shown in your local time.
-  </p>
+            <a href="index.html"
+                class="text-2xl font-black">
+                chines<span class="text-brand">X</span>donghua
+            </a>
 
-  <div id="schedule"></div>
+            <div class="hidden md:flex gap-7 text-sm text-gray-300">
 
-</main>
+                <a href="index.html" class="hover:text-brand">Home</a>
 
-<div id="footer"></div>
+                <a href="schedule.html" data-nav="schedule"
+                    class="text-brand">Schedule</a>
 
-<script src="asset/js/nav.js"></script>
-<script src="asset/js/schedule.js"></script>
+                <a href="search.html" class="hover:text-brand">Search</a>
+
+                <a href="my-list.html" class="hover:text-brand">My List</a>
+
+            </div>
+
+            <button id="menu-toggle"
+                class="md:hidden text-2xl">
+                ☰
+            </button>
+
+        </div>
+
+        <div id="mobile-menu"
+            class="hidden md:hidden border-t border-white/10 p-4 space-y-4">
+
+            <a href="index.html" class="block">Home</a>
+            <a href="schedule.html" class="block text-brand">Schedule</a>
+            <a href="search.html" class="block">Search</a>
+            <a href="my-list.html" class="block">My List</a>
+
+        </div>
+
+    </nav>
+
+
+    <!-- HEADER -->
+    <main class="max-w-7xl mx-auto px-4 py-10">
+
+        <section class="text-center mb-10">
+
+            <p class="text-brand text-xs font-bold tracking-[4px] mb-3">
+                NEVER MISS AN EPISODE
+            </p>
+
+            <h1 class="text-3xl md:text-5xl font-black mb-4">
+                Donghua <span class="text-brand">Schedule</span>
+            </h1>
+
+            <p class="text-gray-400">
+                Track upcoming Chinese Animation episodes.
+            </p>
+
+        </section>
+
+
+        <!-- TIME INFORMATION -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+
+            <div class="time-box rounded-xl p-5">
+
+                <p class="text-gray-400 text-sm mb-2">
+                    🇯🇵 Japan Standard Time
+                </p>
+
+                <h2 id="japan-clock"
+                    class="text-3xl font-bold">
+                    --:--:--
+                </h2>
+
+                <p class="text-gray-500 text-xs mt-2">
+                    JST (UTC +9)
+                </p>
+
+            </div>
+
+
+            <div class="time-box rounded-xl p-5">
+
+                <p class="text-gray-400 text-sm mb-2">
+                    🇮🇳 India Standard Time
+                </p>
+
+                <h2 id="india-clock"
+                    class="text-3xl font-bold">
+                    --:--:--
+                </h2>
+
+                <p class="text-gray-500 text-xs mt-2">
+                    IST (UTC +5:30)
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- TODAY RELEASES -->
+        <section class="mb-14">
+
+            <div class="flex justify-between items-center mb-6">
+
+                <div>
+                    <p class="text-brand text-xs font-bold tracking-widest">
+                        TODAY
+                    </p>
+
+                    <h2 class="text-2xl font-black mt-1">
+                        Today's Releases
+                    </h2>
+                </div>
+
+                <span class="text-xs bg-white/10 px-3 py-2 rounded-full">
+                    🇯🇵 Japan Time
+                </span>
+
+            </div>
+
+
+            <div id="today-releases"
+                class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+
+                <div class="col-span-full text-center py-12 text-gray-500">
+                    Loading today's releases...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- UPCOMING RELEASES -->
+        <section class="mb-14">
+
+            <div class="mb-6">
+
+                <p class="text-brand text-xs font-bold tracking-widest">
+                    COMING SOON
+                </p>
+
+                <h2 class="text-2xl font-black mt-1">
+                    Upcoming Episodes
+                </h2>
+
+                <p class="text-gray-500 text-sm mt-2">
+                    Check the next scheduled Donghua episodes.
+                </p>
+
+            </div>
+
+
+            <div id="upcoming-releases"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+                <div class="col-span-full text-center py-12 text-gray-500">
+                    Loading upcoming episodes...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- INFORMATION -->
+        <section class="bg-card border border-white/10 rounded-2xl p-6">
+
+            <h3 class="font-bold text-lg mb-3">
+                📌 Release Schedule Information
+            </h3>
+
+            <p class="text-gray-400 text-sm leading-7">
+                Release information is collected from available
+                anime metadata sources. Actual release times may
+                differ depending on the official broadcaster.
+                Not every Chinese Donghua has complete airing data.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/10 mt-12 py-8">
+
+        <div class="text-center px-4">
+
+            <h2 class="text-xl font-black mb-2">
+                chines<span class="text-brand">X</span>donghua
+            </h2>
+
+            <p class="text-gray-500 text-sm">
+                Your Donghua Release Tracker.
+            </p>
+
+            <p class="text-gray-600 text-xs mt-4">
+                © 2026 chinesXdonghua
+            </p>
+
+        </div>
+
+    </footer>
+
+
+    <!-- SCRIPTS -->
+    <script src="asset/js/app.js"></script>
+    <script src="asset/js/nav.js"></script>
+    <script src="asset/js/schedule.js"></script>
+
+
+    <!-- CLOCK -->
+    <script>
+        function updateClocks() {
+
+            const now = new Date();
+
+            const japan = now.toLocaleTimeString("en-GB", {
+                timeZone: "Asia/Tokyo",
+                hour12: false
+            });
+
+            const india = now.toLocaleTimeString("en-GB", {
+                timeZone: "Asia/Kolkata",
+                hour12: false
+            });
+
+            document.getElementById("japan-clock").textContent = japan;
+            document.getElementById("india-clock").textContent = india;
+        }
+
+        updateClocks();
+        setInterval(updateClocks, 1000);
+    </script>
 
 </body>
 </html>
-
